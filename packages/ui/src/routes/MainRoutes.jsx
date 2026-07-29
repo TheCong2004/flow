@@ -14,13 +14,17 @@ const Chatflows = Loadable(lazy(() => import('@/views/chatflows')))
 const Agentflows = Loadable(lazy(() => import('@/views/agentflows')))
 
 // marketplaces routing
-const Marketplaces = Loadable(lazy(() => import('@/views/marketplaces')))
+const Marketplaces = Loadable(lazy(() => import('@/views/marketplaces/CommerceMarketplaceRedirect')))
+const CommerceMarketplaceImport = Loadable(lazy(() => import('@/views/marketplaces/CommerceMarketplaceImport')))
 
 // apikey routing
 const APIKey = Loadable(lazy(() => import('@/views/apikey')))
 
 // freellmapi routing
 const FreeLLMAPIDashboard = Loadable(lazy(() => import('@/views/freellmapi')))
+
+// infinite-canvas routing
+const InfiniteCanvas = Loadable(lazy(() => import('@/views/infinite-canvas')))
 
 // tools routing
 const Tools = Loadable(lazy(() => import('@/views/tools')))
@@ -116,6 +120,14 @@ const MainRoutes = {
             )
         },
         {
+            path: '/marketplace-import',
+            element: (
+                <RequireAuth permission={'chatflows:create,agentflows:create'}>
+                    <CommerceMarketplaceImport />
+                </RequireAuth>
+            )
+        },
+        {
             path: '/apikey',
             element: (
                 <RequireAuth permission={'apikeys:view'}>
@@ -126,6 +138,10 @@ const MainRoutes = {
         {
             path: '/freellmapi-dashboard',
             element: <FreeLLMAPIDashboard />
+        },
+        {
+            path: '/infinite-canvas',
+            element: <InfiniteCanvas />
         },
         {
             path: '/tools',

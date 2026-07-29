@@ -22,6 +22,10 @@ export default defineConfig(async ({ mode }) => {
                         // Allow Vite proxying for HTML requests under /freellmapi-app
                         return null
                     }
+                },
+                '/infinite-canvas-app': {
+                    target: `http://127.0.0.1:${serverPort}`,
+                    changeOrigin: true
                 }
             }
         }

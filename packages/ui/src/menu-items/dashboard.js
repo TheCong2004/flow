@@ -24,7 +24,8 @@ import {
     IconFileDatabase,
     IconShieldLock,
     IconListCheck,
-    IconCpu
+    IconCpu,
+    IconLayoutDashboard
 } from '@tabler/icons-react'
 
 // constant
@@ -164,6 +165,14 @@ const dashboard = {
                     type: 'item',
                     url: '/freellmapi-dashboard',
                     icon: icons.IconCpu,
+                    breadcrumbs: true
+                },
+                {
+                    id: 'infinite-canvas',
+                    title: 'Infinite Canvas',
+                    type: 'item',
+                    url: '/infinite-canvas',
+                    icon: icons.IconLayoutDashboard,
                     breadcrumbs: true
                 }
             ]

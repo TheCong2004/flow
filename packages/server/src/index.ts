@@ -223,18 +223,29 @@ export class App {
         this.app.disable('x-powered-by')
 
         // Internal Proxy to built-in FreeLLMAPI service
-        this.app.use('/freellmapi-app', createProxyMiddleware({
-            target: 'http://127.0.0.1:3001',
-            changeOrigin: true,
-            pathRewrite: { '^/freellmapi-app': '' },
-            on: {
-                proxyRes: (proxyRes: any) => {
-                    delete proxyRes.headers['x-frame-options']
-                    delete proxyRes.headers['frame-options']
-                    delete proxyRes.headers['content-security-policy']
+        this.app.use(
+            '/freellmapi-app',
+            createProxyMiddleware({
+                target: 'http://127.0.0.1:3001',
+                changeOrigin: true,
+                pathRewrite: { '^/freellmapi-app': '' },
+                on: {
+                    proxyRes: (proxyRes: any) => {
+                        delete proxyRes.headers['x-frame-options']
+                        delete proxyRes.headers['frame-options']
+                        delete proxyRes.headers['content-security-policy']
+                    }
                 }
-            }
-        }))
+            })
+        )
+
+        // Serve Infinite Canvas static build
+        const infiniteCanvasBuildPath = path.resolve(__dirname, '../../../dist/infinite-canvas')
+        this.app.use('/infinite-canvas-app', express.static(infiniteCanvasBuildPath))
+        this.app.get(['/infinite-canvas-app', '/infinite-canvas-app/*'], (_req: Request, res: Response) => {
+            res.sendFile(path.join(infiniteCanvasBuildPath, 'index.html'))
+        })
+        logger.info('🎨 [server]: Infinite Canvas route registered')
 
         // Add the expressRequestLogger middleware to log all requests
         this.app.use(expressRequestLogger)
@@ -407,16 +418,20 @@ export class App {
 
     async ensureFreeLLMAPIStarted(): Promise<void> {
         return new Promise<void>((resolve) => {
-            const req = http.get('http://127.0.0.1:3001/v1/models', {
-                headers: { Authorization: 'Bearer freellmapi-a7daef8636feb16c7f4779a36125fa86b3c906f4baca2165' }
-            }, (res) => {
-                if (res.statusCode === 200 || res.statusCode === 401) {
-                    logger.info('🔗 [FreeLLMAPI]: Built-in FreeLLMAPI background service is running on port 3001')
-                    resolve()
-                } else {
-                    this.spawnFreeLLM(resolve)
+            const req = http.get(
+                'http://127.0.0.1:3001/v1/models',
+                {
+                    headers: { Authorization: 'Bearer freellmapi-a7daef8636feb16c7f4779a36125fa86b3c906f4baca2165' }
+                },
+                (res) => {
+                    if (res.statusCode === 200 || res.statusCode === 401) {
+                        logger.info('🔗 [FreeLLMAPI]: Built-in FreeLLMAPI background service is running on port 3001')
+                        resolve()
+                    } else {
+                        this.spawnFreeLLM(resolve)
+                    }
                 }
-            })
+            )
             req.on('error', () => {
                 this.spawnFreeLLM(resolve)
             })

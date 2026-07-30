@@ -1,5 +1,15 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
-import ReactFlow, { Background, Controls, MiniMap, ReactFlowProvider, useEdgesState, useNodesState } from 'reactflow'
+import ReactFlow, {
+    Background,
+    Controls,
+    Handle,
+    MiniMap,
+    type NodeProps,
+    Position,
+    ReactFlowProvider,
+    useEdgesState,
+    useNodesState
+} from 'reactflow'
 
 import { Alert, Snackbar } from '@mui/material'
 import { IconRefreshAlert, IconSparkles } from '@tabler/icons-react'
@@ -19,6 +29,7 @@ import {
     useFlowNodes
 } from './features/canvas'
 import { ValidationFeedback } from './features/canvas/components'
+import { AgentflowDock } from './features/canvas/components/AgentflowDock'
 import { GenerateFlowDialog } from './features/generator'
 import { EditNodeDialog } from './features/node-editor'
 import { AddNodesDrawer, StyledFab } from './features/node-palette'
@@ -28,6 +39,29 @@ import { useAgentflow } from './useAgentflow'
 
 import 'reactflow/dist/style.css'
 import './features/canvas/canvas.css'
+
+type CanvasAssetData = {
+    label?: string
+    assetKind: 'text' | 'image' | 'video' | 'audio'
+    url?: string
+    text?: string
+}
+
+function CanvasAssetNode({ data, selected }: NodeProps<CanvasAssetData>) {
+    return (
+        <div className={`agentflow-asset-node ${selected ? 'selected' : ''}`}>
+            <Handle type='target' position={Position.Left} />
+            {data.assetKind === 'image' && data.url ? <img src={data.url} alt={data.label || 'Image'} /> : null}
+            {data.assetKind === 'video' && data.url ? <video src={data.url} controls /> : null}
+            {data.assetKind === 'audio' && data.url ? <audio src={data.url} controls /> : null}
+            {data.assetKind === 'text' ? <div className='agentflow-asset-text'>{data.text || 'Double-click to edit text'}</div> : null}
+            <span className='agentflow-asset-label'>{data.label}</span>
+            <Handle type='source' position={Position.Right} />
+        </div>
+    )
+}
+
+const workflowNodeTypes = { ...nodeTypes, canvasAsset: CanvasAssetNode }
 
 /**
  * Internal canvas component that uses the contexts
@@ -91,6 +125,8 @@ function AgentflowCanvas({
     const [nodes, setLocalNodes, onNodesChange] = useNodesState(safeInitialNodes)
     const [edges, setLocalEdges, onEdgesChange] = useEdgesState(safeInitialEdges)
     const [showGenerateDialog, setShowGenerateDialog] = useState(false)
+    const [history, setHistory] = useState<Array<{ nodes: typeof nodes; edges: typeof edges }>>([])
+    const [future, setFuture] = useState<Array<{ nodes: typeof nodes; edges: typeof edges }>>([])
 
     // Constraint violation snackbar state
     const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({ open: false, message: '' })
@@ -195,13 +231,103 @@ function AgentflowCanvas({
         [setLocalNodes, setLocalEdges, setDirty, onFlowGenerated]
     )
 
+    const rememberCanvas = useCallback(() => {
+        setHistory((items) => [...items.slice(-29), { nodes, edges }])
+        setFuture([])
+    }, [nodes, edges])
+
+    const addAssetNode = useCallback(
+        (assetKind: CanvasAssetData['assetKind'], url?: string, label?: string) => {
+            rememberCanvas()
+            const id = `canvasAsset_${Date.now()}`
+            const assetNode = {
+                id,
+                type: 'canvasAsset',
+                position: { x: 420 + Math.random() * 180, y: 220 + Math.random() * 120 },
+                data: {
+                    assetKind,
+                    url,
+                    label: label || (assetKind === 'text' ? 'Text' : assetKind),
+                    text: assetKind === 'text' ? 'Double-click to edit text' : undefined
+                }
+            }
+            setLocalNodes((items) => [...items, assetNode] as typeof items)
+            setDirty(true)
+        },
+        [rememberCanvas, setLocalNodes, setDirty]
+    )
+
+    const pickMedia = useCallback(
+        (accept: string) => {
+            const input = document.createElement('input')
+            input.type = 'file'
+            input.accept = accept
+            input.onchange = () => {
+                const file = input.files?.[0]
+                if (!file) return
+                const kind: CanvasAssetData['assetKind'] = file.type.startsWith('video/')
+                    ? 'video'
+                    : file.type.startsWith('audio/')
+                    ? 'audio'
+                    : 'image'
+                addAssetNode(kind, URL.createObjectURL(file), file.name)
+            }
+            input.click()
+        },
+        [addAssetNode]
+    )
+
+    const undoCanvas = useCallback(() => {
+        setHistory((items) => {
+            const previous = items.at(-1)
+            if (!previous) return items
+            setFuture((next) => [{ nodes, edges }, ...next].slice(0, 30))
+            setLocalNodes(previous.nodes)
+            setLocalEdges(previous.edges)
+            return items.slice(0, -1)
+        })
+    }, [nodes, edges, setLocalNodes, setLocalEdges])
+
+    const redoCanvas = useCallback(() => {
+        setFuture((items) => {
+            const next = items[0]
+            if (!next) return items
+            setHistory((previous) => [...previous.slice(-29), { nodes, edges }])
+            setLocalNodes(next.nodes)
+            setLocalEdges(next.edges)
+            return items.slice(1)
+        })
+    }, [nodes, edges, setLocalNodes, setLocalEdges])
+
+    const deleteSelected = useCallback(() => {
+        if (!nodes.some((node) => node.selected) && !edges.some((edge) => edge.selected)) return
+        rememberCanvas()
+        setLocalNodes((items) => items.filter((node) => !node.selected))
+        setLocalEdges((items) => items.filter((edge) => !edge.selected))
+        setDirty(true)
+    }, [nodes, edges, rememberCanvas, setLocalNodes, setLocalEdges, setDirty])
+
+    const clearCanvas = useCallback(() => {
+        rememberCanvas()
+        setLocalNodes([])
+        setLocalEdges([])
+        setDirty(true)
+    }, [rememberCanvas, setLocalNodes, setLocalEdges, setDirty])
+
+    const deselectCanvas = useCallback(() => {
+        setLocalNodes((items) => items.map((node) => ({ ...node, selected: false })))
+        setLocalEdges((items) => items.map((edge) => ({ ...edge, selected: false })))
+    }, [setLocalNodes, setLocalEdges])
     // Handle save — run validation first and highlight problem nodes
     const handleSave = useCallback(() => {
         if (!onSave) return
 
         const flowNodes = nodes as FlowNode[]
         const flowEdges = edges as FlowEdge[]
-        const result = validateFlow(flowNodes, flowEdges, availableNodes)
+        const executableNodes = flowNodes.filter((node) => node.type !== 'canvasAsset')
+        const executableIds = new Set(executableNodes.map((node) => node.id))
+        const executableEdges = flowEdges.filter((edge) => executableIds.has(edge.source) && executableIds.has(edge.target))
+        const result = validateFlow(executableNodes, executableEdges, availableNodes)
 
         // Update node border highlighting: set errors on failing nodes, clear errors on now-valid nodes
         setLocalNodes((prev) => applyValidationErrorsToNodes(prev as FlowNode[], result.errors) as FlowNode[])
@@ -243,7 +369,7 @@ function AgentflowCanvas({
     }
 
     return (
-        <div className={`agentflow-container${isDarkMode ? ' dark' : ''}`}>
+        <div className={`agentflow-container flow-editor-agent${isDarkMode ? ' dark' : ''}`}>
             {/* Header */}
             {renderHeader ? renderHeader(headerProps) : showDefaultHeader ? <AgentflowHeader {...headerProps} readOnly={readOnly} /> : null}
 
@@ -329,6 +455,20 @@ function AgentflowCanvas({
                         </div>
                     )}
 
+                    {!readOnly && (
+                        <AgentflowDock
+                            canUndo={history.length > 0}
+                            canRedo={future.length > 0}
+                            hasSelection={nodes.some((node) => node.selected) || edges.some((edge) => edge.selected)}
+                            onUndo={undoCanvas}
+                            onRedo={redoCanvas}
+                            onAddText={() => addAssetNode('text')}
+                            onPickMedia={pickMedia}
+                            onDelete={deleteSelected}
+                            onClear={clearCanvas}
+                            onDeselect={deselectCanvas}
+                        />
+                    )}
                     <ReactFlow
                         nodes={nodes}
                         edges={edges}
@@ -337,7 +477,7 @@ function AgentflowCanvas({
                         onConnect={handleConnect}
                         onNodeDragStop={handleNodeDragStop}
                         onInit={setReactFlowInstance}
-                        nodeTypes={nodeTypes}
+                        nodeTypes={workflowNodeTypes}
                         edgeTypes={edgeTypes}
                         connectionLineComponent={ConnectionLine}
                         fitView
@@ -345,7 +485,7 @@ function AgentflowCanvas({
                         nodesConnectable={!readOnly}
                         elementsSelectable={!readOnly}
                     >
-                        <Controls className={isDarkMode ? 'dark-mode-controls' : ''} />
+                        <Controls className={`flow-editor-agent-controls ${isDarkMode ? 'dark-mode-controls' : ''}`} />
                         <MiniMap
                             nodeStrokeWidth={3}
                             nodeColor={reactFlowColors.minimapNode}

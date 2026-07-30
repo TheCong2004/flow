@@ -77,7 +77,6 @@ const Canvas = () => {
     const { confirm } = useConfirm()
 
     const dispatch = useDispatch()
-    const customization = useSelector((state) => state.customization)
     const canvas = useSelector((state) => state.canvas)
     const [canvasDataStore, setCanvasDataStore] = useState(canvas)
     const [chatflow, setChatflow] = useState(null)
@@ -562,6 +561,7 @@ const Canvas = () => {
         <>
             <Box>
                 <AppBar
+                    className='flow-editor-appbar'
                     enableColorOnDark
                     position='fixed'
                     color='inherit'
@@ -570,7 +570,7 @@ const Canvas = () => {
                         bgcolor: theme.palette.background.default
                     }}
                 >
-                    <Toolbar>
+                    <Toolbar className='flow-editor-toolbar'>
                         <CanvasHeader
                             chatflow={chatflow}
                             handleSaveFlow={handleSaveFlow}
@@ -580,7 +580,7 @@ const Canvas = () => {
                         />
                     </Toolbar>
                 </AppBar>
-                <Box sx={{ pt: '70px', height: '100vh', width: '100%' }}>
+                <Box className='flow-editor-canvas-shell' sx={{ pt: '70px', height: '100vh', width: '100%' }}>
                     <div className='reactflow-parent-wrapper'>
                         <div className='reactflow-wrapper' ref={reactFlowWrapper}>
                             <ReactFlow
@@ -603,36 +603,25 @@ const Canvas = () => {
                                 snapToGrid={isSnappingEnabled}
                                 className='chatflow-canvas'
                             >
-                                <Controls
-                                    className={customization.isDarkMode ? 'dark-mode-controls' : ''}
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'row',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)'
-                                    }}
-                                >
+                                <Controls className='flow-editor-zoom-controls' />
+                                <div className='flow-editor-canvas-toolbar'>
                                     <button
-                                        className='react-flow__controls-button react-flow__controls-interactive'
-                                        onClick={() => {
-                                            setIsSnappingEnabled(!isSnappingEnabled)
-                                        }}
-                                        title='toggle snapping'
-                                        aria-label='toggle snapping'
+                                        type='button'
+                                        onClick={() => setIsSnappingEnabled(!isSnappingEnabled)}
+                                        title='Bật/tắt căn chỉnh'
+                                        aria-label='Bật/tắt căn chỉnh'
                                     >
                                         {isSnappingEnabled ? <IconMagnetFilled /> : <IconMagnetOff />}
                                     </button>
                                     <button
-                                        className='react-flow__controls-button react-flow__controls-interactive'
-                                        onClick={() => {
-                                            setIsBackgroundEnabled(!isBackgroundEnabled)
-                                        }}
-                                        title='toggle background'
-                                        aria-label='toggle background'
+                                        type='button'
+                                        onClick={() => setIsBackgroundEnabled(!isBackgroundEnabled)}
+                                        title='Bật/tắt nền canvas'
+                                        aria-label='Bật/tắt nền canvas'
                                     >
                                         {isBackgroundEnabled ? <IconArtboard /> : <IconArtboardOff />}
                                     </button>
-                                </Controls>
+                                </div>
                                 {isBackgroundEnabled && <Background color='#aaa' gap={16} />}
                                 <AddNodes isAgentCanvas={isAgentCanvas} nodesData={getNodesApi.data} node={selectedNode} />
                                 {isSyncNodesButtonEnabled && (

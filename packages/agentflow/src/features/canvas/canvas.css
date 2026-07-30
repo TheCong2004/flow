@@ -313,3 +313,370 @@
         font-size: 12px;
     }
 }
+
+/* INFINITE CANVAS VISUAL LAYER — presentation only. */
+.flow-editor-agent {
+    color: #f5f5f4;
+    background: #171715;
+}
+.flow-editor-agent .agentflow-header {
+    min-height: 70px;
+    padding: 0 28px;
+    color: #f5f5f4;
+    background: #171715;
+    border-bottom: 1px solid #2d2c29;
+}
+.flow-editor-agent .agentflow-title {
+    color: #f5f5f4;
+    font-size: 18px;
+}
+.flow-editor-agent .agentflow-header-actions button {
+    min-height: 40px;
+    padding: 0 20px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    border: 0;
+    border-radius: 12px;
+}
+.flow-editor-agent .agentflow-header-actions button:hover {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+}
+.flow-editor-agent .agentflow-canvas,
+.flow-editor-agent .agentflow-canvas .react-flow,
+.flow-editor-agent .agentflow-canvas .react-flow__background {
+    background: #171715;
+}
+.flow-editor-agent .react-flow__background-pattern {
+    color: #302f2b;
+}
+.flow-editor-agent-controls.react-flow__controls {
+    left: 50%;
+    bottom: 22px;
+    top: auto;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: row;
+    gap: 3px;
+    padding: 8px 10px;
+    overflow: visible;
+    border: 1px solid #45433e;
+    border-radius: 14px;
+    background: rgba(31, 30, 28, 0.94);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(16px);
+}
+.flow-editor-agent-controls .react-flow__controls-button {
+    width: 34px;
+    height: 34px;
+    color: #e7e5e4;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+}
+.flow-editor-agent-controls .react-flow__controls-button svg {
+    color: currentColor;
+    fill: currentColor;
+}
+.flow-editor-agent-controls .react-flow__controls-button:hover {
+    background: #34322f;
+}
+.flow-editor-agent-add-node.MuiFab-root {
+    width: auto;
+    min-width: 156px;
+    height: 50px;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 0 18px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #8b5cf6, #4f46e5);
+    border: 1px solid rgba(196, 181, 253, 0.55);
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+}
+.flow-editor-agent-add-node.MuiFab-root:hover {
+    background: linear-gradient(135deg, #7c3aed, #4338ca);
+}
+.flow-editor-agent-add-label {
+    color: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+.flow-editor-agent-popper {
+    margin-top: 10px;
+}
+.flow-editor-agent-node-panel {
+    width: 310px;
+    overflow: hidden;
+    color: #e7e5e4;
+    background: rgba(31, 30, 28, 0.98);
+    border: 1px solid #45433e;
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+.flow-editor-agent-node-panel .MuiTypography-root,
+.flow-editor-agent-node-panel .MuiListItemText-primary,
+.flow-editor-agent-node-panel .MuiListItemText-secondary {
+    color: #e7e5e4;
+}
+.flow-editor-agent-node-panel .MuiOutlinedInput-root {
+    color: #f5f5f4;
+    background: #171715;
+    border-radius: 10px;
+}
+.flow-editor-agent-node-panel .MuiAccordion-root,
+.flow-editor-agent-node-panel .MuiAccordionSummary-root,
+.flow-editor-agent-node-panel .MuiAccordionDetails-root,
+.flow-editor-agent-node-panel .MuiList-root,
+.flow-editor-agent-node-panel .MuiListItemButton-root {
+    color: #e7e5e4;
+    background: transparent;
+}
+.flow-editor-agent-node-panel .MuiListItemButton-root:hover {
+    background: #34322f;
+}
+@media (max-width: 760px) {
+    .flow-editor-agent .agentflow-header {
+        padding: 0 12px;
+    }
+    .flow-editor-agent-add-node.MuiFab-root {
+        min-width: 50px;
+        width: 50px;
+        padding: 0;
+        justify-content: center;
+    }
+    .flow-editor-agent-add-label {
+        display: none;
+    }
+    .flow-editor-agent-node-panel {
+        width: min(310px, calc(100vw - 32px));
+    }
+}
+
+/* EXACT WORKFLOW EDITOR CHROME */
+.flow-editor-agent .agentflow-header {
+    min-height: 76px;
+    padding: 0 22px;
+    background: #171715;
+}
+.flow-editor-agent .agentflow-header-brand,
+.flow-editor-agent .agentflow-header-actions,
+.flow-editor-agent .agentflow-header-action,
+.flow-editor-agent .agentflow-save-button,
+.flow-editor-agent .agentflow-header-icon {
+    display: flex;
+    align-items: center;
+}
+.flow-editor-agent .agentflow-header-brand {
+    gap: 10px;
+    min-width: 0;
+}
+.flow-editor-agent .agentflow-title {
+    max-width: 330px;
+    overflow: hidden;
+    color: #f5f5f4;
+    font-size: 17px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.flow-editor-agent .agentflow-header-actions {
+    gap: 6px;
+}
+.flow-editor-agent .agentflow-header-actions button,
+.flow-editor-agent .agentflow-header-icon {
+    min-height: 42px;
+    gap: 8px;
+    padding: 0 14px;
+    color: #e7e5e4;
+    background: transparent;
+    border: 0;
+    border-radius: 12px;
+    box-shadow: none;
+}
+.flow-editor-agent .agentflow-header-actions button:hover,
+.flow-editor-agent .agentflow-header-icon:hover {
+    color: #fff;
+    background: #2b2926;
+}
+.flow-editor-agent .agentflow-header-actions svg,
+.flow-editor-agent .agentflow-header-icon svg {
+    width: 20px;
+    height: 20px;
+}
+.flow-editor-agent .agentflow-header-icon {
+    justify-content: center;
+    width: 42px;
+    padding: 0;
+    cursor: pointer;
+}
+.flow-editor-agent .agentflow-save-button {
+    color: #171715 !important;
+    background: #e7e5e4 !important;
+    font-weight: 700;
+}
+.flow-editor-agent .agentflow-save-button:hover {
+    background: #fff !important;
+}
+.flow-editor-agent .agentflow-run-button {
+    border: 1px solid #45433e !important;
+}
+.flow-editor-agent-add-node.MuiFab-root {
+    left: 24px !important;
+    top: 22px !important;
+    min-width: 266px;
+    height: 50px;
+    color: #e7e5e4;
+    background: #211f1d;
+    border-color: #45433e;
+    border-radius: 14px 14px 0 0;
+    box-shadow: none;
+}
+.flow-editor-agent-add-node.MuiFab-root:hover {
+    background: #2b2926;
+}
+.flow-editor-agent-popper {
+    position: absolute !important;
+    inset: 72px auto auto 24px !important;
+    margin: 0 !important;
+    transform: none !important;
+}
+.flow-editor-agent-node-panel {
+    width: 266px;
+    max-height: calc(100vh - 230px) !important;
+    border-radius: 0 0 14px 14px;
+}
+.flow-editor-agent .agentflow-canvas .react-flow__node-agentflowNode > div > div {
+    color: #f5f5f4 !important;
+    background: #292624 !important;
+    border-color: #504c47 !important;
+    border-radius: 20px !important;
+    box-shadow: none !important;
+}
+.flow-editor-agent .agentflow-canvas .react-flow__node-agentflowNode .MuiTypography-root {
+    color: #f5f5f4;
+}
+.flow-editor-agent .agentflow-canvas .react-flow__edge-path {
+    stroke: #d6d3d1;
+}
+.flow-editor-agent .react-flow__minimap {
+    right: 22px;
+    bottom: 22px;
+    border: 1px solid #45433e;
+    background: #211f1d !important;
+}
+@media (max-width: 1100px) {
+    .flow-editor-agent .agentflow-header-action {
+        font-size: 0;
+        padding: 0 10px !important;
+    }
+    .flow-editor-agent .agentflow-header-action svg {
+        margin: 0;
+    }
+}
+
+/* Workflow editor functional dock and rich canvas assets */
+.flow-editor-agent .agentflow-workflow-dock {
+    position: absolute;
+    left: 50%;
+    bottom: 24px;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 58px;
+    padding: 8px 10px;
+    color: #e7e5e4;
+    background: rgba(31, 29, 27, 0.96);
+    border: 1px solid #4a4742;
+    border-radius: 16px;
+    box-shadow: 0 16px 45px rgba(0, 0, 0, 0.38);
+    transform: translateX(-50%);
+    backdrop-filter: blur(14px);
+}
+.flow-editor-agent .agentflow-dock-button {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    place-items: center;
+    color: #d6d3d1;
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.flow-editor-agent .agentflow-dock-button:hover:not(:disabled) {
+    color: #fff;
+    background: #3a3733;
+}
+.flow-editor-agent .agentflow-dock-button:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+.flow-editor-agent .agentflow-dock-button.danger {
+    color: #fb7185;
+}
+.flow-editor-agent .agentflow-dock-button svg {
+    width: 21px;
+    height: 21px;
+}
+.flow-editor-agent .agentflow-dock-divider {
+    width: 1px;
+    height: 27px;
+    margin: 0 4px;
+    background: #4a4742;
+}
+.flow-editor-agent .react-flow__node-canvasAsset {
+    min-width: 260px;
+}
+.flow-editor-agent .agentflow-asset-node {
+    min-width: 260px;
+    max-width: 440px;
+    overflow: hidden;
+    color: #f5f5f4;
+    background: #292624;
+    border: 2px solid #504c47;
+    border-radius: 22px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+}
+.flow-editor-agent .agentflow-asset-node.selected {
+    border-color: #2f8cff;
+}
+.flow-editor-agent .agentflow-asset-node img,
+.flow-editor-agent .agentflow-asset-node video {
+    display: block;
+    width: 100%;
+    max-height: 310px;
+    object-fit: contain;
+    background: #111;
+}
+.flow-editor-agent .agentflow-asset-node audio {
+    display: block;
+    width: 300px;
+    margin: 24px;
+}
+.flow-editor-agent .agentflow-asset-text {
+    min-width: 320px;
+    min-height: 130px;
+    padding: 26px;
+    font: 600 18px/1.55 ui-monospace, monospace;
+    white-space: pre-wrap;
+}
+.flow-editor-agent .agentflow-asset-label {
+    display: block;
+    padding: 10px 14px;
+    color: #a8a29e;
+    font-size: 12px;
+    border-top: 1px solid #45413d;
+}
+.flow-editor-agent .flow-editor-agent-controls {
+    left: 24px !important;
+    bottom: 24px !important;
+}
+@media (max-width: 900px) {
+    .flow-editor-agent .agentflow-workflow-dock {
+        max-width: calc(100vw - 32px);
+        overflow-x: auto;
+    }
+}

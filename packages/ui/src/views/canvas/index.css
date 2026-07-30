@@ -86,3 +86,258 @@
     color: #ffffff;
     fill: #ffffff;
 }
+
+/* FLOW EDITOR VISUAL LAYER — UI only; React Flow behavior remains unchanged. */
+.flow-editor-appbar {
+    background: #171715 !important;
+    color: #f5f5f4 !important;
+    border-bottom: 1px solid #2d2c29;
+    box-shadow: none !important;
+}
+
+.flow-editor-toolbar {
+    min-height: 70px !important;
+    padding: 0 28px !important;
+}
+
+.flow-editor-toolbar .MuiTypography-root,
+.flow-editor-toolbar .MuiSvgIcon-root,
+.flow-editor-toolbar svg {
+    color: #f5f5f4;
+}
+
+.flow-editor-toolbar .MuiAvatar-root {
+    border: 1px solid transparent;
+    box-shadow: none !important;
+}
+
+.flow-editor-canvas-shell,
+.flow-editor-canvas-shell .reactflow-parent-wrapper,
+.flow-editor-canvas-shell .reactflow-wrapper,
+.flow-editor-canvas-shell .react-flow {
+    background: #171715;
+}
+
+.chatflow-canvas .react-flow__pane {
+    cursor: grab;
+}
+
+.chatflow-canvas .react-flow__pane:active {
+    cursor: grabbing;
+}
+
+.chatflow-canvas .react-flow__background line,
+.chatflow-canvas .react-flow__background path {
+    stroke: #302f2b !important;
+}
+
+.flow-editor-controls.react-flow__controls {
+    left: 50% !important;
+    bottom: 22px !important;
+    top: auto !important;
+    transform: translateX(-50%) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 3px;
+    padding: 8px 10px;
+    border: 1px solid #45433e;
+    border-radius: 14px;
+    background: rgba(31, 30, 28, 0.94);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(16px);
+}
+
+.flow-editor-controls .react-flow__controls-button,
+.flow-editor-controls .react-flow__controls-button.react-flow__controls-interactive {
+    width: 34px;
+    height: 34px;
+    border: 0 !important;
+    border-radius: 8px;
+    color: #e7e5e4 !important;
+    background: transparent !important;
+}
+
+.flow-editor-controls .react-flow__controls-button:hover,
+.flow-editor-controls .react-flow__controls-button.react-flow__controls-interactive:hover {
+    background: #34322f !important;
+}
+
+.flow-editor-controls .react-flow__controls-button svg {
+    color: currentColor !important;
+    fill: currentColor !important;
+}
+
+.flow-editor-add-node-button.MuiFab-root {
+    width: auto !important;
+    min-width: 156px;
+    height: 50px;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 0 18px;
+    border: 1px solid #45433e;
+    border-radius: 14px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #8b5cf6, #4f46e5);
+    box-shadow: 0 12px 30px rgba(99, 102, 241, 0.32);
+}
+
+.flow-editor-add-node-button.MuiFab-root:hover {
+    background: linear-gradient(135deg, #7c3aed, #4338ca);
+}
+
+.flow-editor-add-node-label {
+    display: inline !important;
+    color: inherit !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.03em;
+}
+
+.flow-editor-node-popper {
+    z-index: 1200 !important;
+    margin-top: 10px !important;
+}
+
+.flow-editor-node-panel {
+    width: 310px;
+    max-height: min(68vh, 680px);
+    overflow: hidden;
+    color: #e7e5e4 !important;
+    background: rgba(31, 30, 28, 0.98) !important;
+    border: 1px solid #45433e;
+    border-radius: 16px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45) !important;
+}
+
+.flow-editor-node-panel .MuiTypography-root,
+.flow-editor-node-panel .MuiListItemText-primary,
+.flow-editor-node-panel .MuiListItemText-secondary {
+    color: #e7e5e4;
+}
+
+.flow-editor-node-panel .MuiOutlinedInput-root {
+    color: #f5f5f4;
+    background: #171715;
+    border-radius: 10px;
+}
+
+.flow-editor-node-panel .MuiAccordion-root,
+.flow-editor-node-panel .MuiAccordionSummary-root,
+.flow-editor-node-panel .MuiAccordionDetails-root,
+.flow-editor-node-panel .MuiList-root,
+.flow-editor-node-panel .MuiListItemButton-root {
+    color: #e7e5e4;
+    background: transparent;
+}
+
+.flow-editor-node-panel .MuiListItemButton-root:hover {
+    background: #34322f;
+}
+
+@media (max-width: 760px) {
+    .flow-editor-toolbar {
+        padding: 0 12px !important;
+    }
+    .flow-editor-add-node-button.MuiFab-root {
+        min-width: 50px;
+        width: 50px !important;
+        padding: 0;
+        justify-content: center;
+    }
+    .flow-editor-add-node-label {
+        display: none !important;
+    }
+    .flow-editor-node-panel {
+        width: min(310px, calc(100vw - 32px));
+    }
+}
+
+.flow-editor-zoom-controls.react-flow__controls {
+    left: 24px !important;
+    bottom: 22px !important;
+    top: auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 3px;
+    padding: 8px 10px;
+    overflow: visible;
+    border: 1px solid #45433e;
+    border-radius: 14px;
+    background: rgba(31, 30, 28, 0.94);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(16px);
+}
+.flow-editor-zoom-controls .react-flow__controls-button {
+    width: 34px;
+    height: 34px;
+    color: #e7e5e4;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+}
+.flow-editor-zoom-controls .react-flow__controls-button:hover {
+    background: #34322f;
+}
+.flow-editor-zoom-controls .react-flow__controls-button svg {
+    color: currentColor;
+    fill: currentColor;
+}
+.flow-editor-canvas-toolbar {
+    position: absolute;
+    z-index: 5;
+    left: 50%;
+    bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 190px;
+    min-height: 52px;
+    justify-content: center;
+    padding: 8px 12px;
+    transform: translateX(-50%);
+    border: 1px solid #45433e;
+    border-radius: 14px;
+    background: rgba(31, 30, 28, 0.94);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(16px);
+}
+.flow-editor-canvas-toolbar button {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    padding: 0;
+    color: #e7e5e4;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.flow-editor-canvas-toolbar button:first-child {
+    color: #c4b5fd;
+    background: rgba(124, 58, 237, 0.18);
+}
+.flow-editor-canvas-toolbar button:nth-child(2) {
+    color: #5eead4;
+    background: rgba(20, 184, 166, 0.16);
+}
+.flow-editor-canvas-toolbar button:hover {
+    background: #34322f;
+}
+.flow-editor-canvas-toolbar svg {
+    width: 19px;
+    height: 19px;
+}
+@media (max-width: 760px) {
+    .flow-editor-zoom-controls.react-flow__controls {
+        left: 12px !important;
+        bottom: 14px !important;
+    }
+    .flow-editor-canvas-toolbar {
+        right: 12px;
+        bottom: 14px;
+        left: auto;
+        min-width: auto;
+        transform: none;
+    }
+}

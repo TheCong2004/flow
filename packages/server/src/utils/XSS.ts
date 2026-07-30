@@ -23,7 +23,17 @@ export function sanitizeMiddleware(req: Request, res: Response, next: NextFuncti
 
 export function getAllowedCorsOrigins(): string {
     // Expects FQDN separated by commas, otherwise nothing.
-    return process.env.CORS_ORIGINS ?? ''
+    const globalOrigins = process.env.CORS_ORIGINS?.trim() ?? ''
+    const clientOrigins = process.env.CLIENT_ALLOWED_ORIGINS?.trim() ?? ''
+    if (globalOrigins === '*' || clientOrigins === '*') return '*'
+    return Array.from(
+        new Set(
+            `${globalOrigins},${clientOrigins}`
+                .split(',')
+                .map((origin) => origin.trim())
+                .filter(Boolean)
+        )
+    ).join(',')
 }
 
 export function getAllowCredentials(): boolean {
@@ -92,6 +102,7 @@ export function getCorsOptions(): any {
                 const isPublicChatflowReq = isPublicChatflowRequest(req.url)
                 const isTTSReq = isTTSGenerateRequest(req.url)
                 const allowedList = parseAllowedOrigins(allowedOrigins)
+                const sessionAllowedList = parseAllowedOrigins(process.env.CORS_ORIGINS ?? '')
                 const originLc = origin?.toLowerCase()
 
                 // Always allow no-Origin requests (same-origin, server-to-server)
@@ -103,7 +114,7 @@ export function getCorsOptions(): any {
                 // Session-issuing endpoints: ignore global wildcard, use APP_URL origin or explicit CORS_ORIGINS list
                 if (isSessionEndpoint(req.url)) {
                     const authList = getAllowedAuthCorsOrigins()
-                    return originCallback(null, authList.includes(originLc) || allowedList.includes(originLc))
+                    return originCallback(null, authList.includes(originLc) || sessionAllowedList.includes(originLc))
                 }
 
                 // Global allow: '*' or exact match

@@ -1,4 +1,4 @@
-import { EdgeLabelRenderer, getBezierPath } from 'reactflow'
+﻿import { EdgeLabelRenderer, getBezierPath } from 'reactflow'
 import { memo, useState, useContext } from 'react'
 import PropTypes from 'prop-types'
 import { useDispatch } from 'react-redux'
@@ -84,13 +84,16 @@ const AgentFlowEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition,
             />
             <path
                 id={id}
-                className='agent-flow-edge'
+                className={
+                    'agent-flow-edge' + (data?.highlighted ? ' is-highlighted' : '') + (data?.hasActiveSelection ? ' has-selection' : '')
+                }
                 style={{
-                    strokeWidth: selected ? 3 : 2,
+                    strokeWidth: selected || data?.highlighted ? 3.5 : 2.25,
                     stroke: `url(#${gradientId})`,
-                    filter: selected ? 'drop-shadow(0 0 3px rgba(0,0,0,0.3))' : 'none',
+                    strokeDasharray: '10 8',
+                    filter: selected || data?.highlighted ? `drop-shadow(0 0 6px ${data?.sourceColor || '#3b82f6'})` : 'none',
                     cursor: 'pointer',
-                    opacity: selected ? 1 : 0.75,
+                    opacity: data?.hasActiveSelection ? (data?.highlighted ? 1 : 0.16) : selected ? 1 : 0.82,
                     fill: 'none'
                 }}
                 d={edgePath}

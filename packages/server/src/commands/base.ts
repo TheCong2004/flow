@@ -141,6 +141,11 @@ export abstract class BaseCommand extends Command {
         PASSWORD_RESET_TOKEN_EXPIRY_IN_MINS: Flags.string(),
         PASSWORD_SALT_HASH_ROUNDS: Flags.string(),
         TOKEN_HASH_SECRET: Flags.string(),
+        SUPABASE_URL: Flags.string(),
+        SUPABASE_PUBLISHABLE_KEY: Flags.string(),
+        CLIENT_API_ENABLED: Flags.string(),
+        CLIENT_API_AUTO_LINK_BY_EMAIL: Flags.string(),
+        CLIENT_ALLOWED_ORIGINS: Flags.string(),
         WORKSPACE_INVITE_TEMPLATE_PATH: Flags.string(),
 
         // Enterprise

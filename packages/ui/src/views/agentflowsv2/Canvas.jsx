@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback, useContext } from 'react'
+﻿import { useEffect, useMemo, useRef, useState, useCallback, useContext } from 'react'
 import ReactFlow, { addEdge, Controls, MiniMap, Background, useNodesState, useEdgesState } from 'reactflow'
 import 'reactflow/dist/style.css'
 import './index.css'
@@ -25,6 +25,7 @@ import IterationNode from './IterationNode'
 import AgentFlowEdge from './AgentFlowEdge'
 import ConnectionLine from './ConnectionLine'
 import StickyNote from './StickyNote'
+import CanvasMediaNode from './CanvasMediaNode'
 import CanvasHeader from '@/views/canvas/CanvasHeader'
 import AddNodes from '@/views/canvas/AddNodes'
 import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
@@ -44,7 +45,23 @@ import useApi from '@/hooks/useApi'
 import useConfirm from '@/hooks/useConfirm'
 
 // icons
-import { IconX, IconRefreshAlert, IconMagnetFilled, IconMagnetOff, IconArtboard, IconArtboardOff } from '@tabler/icons-react'
+import {
+    IconX,
+    IconRefreshAlert,
+    IconMagnetFilled,
+    IconMagnetOff,
+    IconArtboard,
+    IconArtboardOff,
+    IconHandStop,
+    IconArrowBackUp,
+    IconArrowForwardUp,
+    IconTypography,
+    IconPhoto,
+    IconVideo,
+    IconMusic,
+    IconUpload,
+    IconTrash
+} from '@tabler/icons-react'
 
 // utils
 import {
@@ -61,8 +78,10 @@ import { usePrompt } from '@/utils/usePrompt'
 // const
 import { FLOWISE_CREDENTIAL_ID, AGENTFLOW_ICONS } from '@/store/constant'
 
-const nodeTypes = { agentFlow: CanvasNode, stickyNote: StickyNote, iteration: IterationNode }
+const nodeTypes = { agentFlow: CanvasNode, stickyNote: StickyNote, iteration: IterationNode, workflowMedia: CanvasMediaNode }
 const edgeTypes = { agentFlow: AgentFlowEdge }
+
+const MEDIA_COLORS = { image: '#8b5cf6', video: '#f97316', audio: '#ec4899' }
 
 // ==============================|| CANVAS ||============================== //
 
@@ -136,8 +155,8 @@ const AgentflowCanvas = () => {
         const nodeName = params.sourceHandle.split('_')[0]
         const targetNodeName = params.targetHandle.split('_')[0]
 
-        const targetColor = AGENTFLOW_ICONS.find((icon) => icon.name === targetNodeName)?.color ?? theme.palette.primary.main
-        const sourceColor = AGENTFLOW_ICONS.find((icon) => icon.name === nodeName)?.color ?? theme.palette.primary.main
+        let targetColor = AGENTFLOW_ICONS.find((icon) => icon.name === targetNodeName)?.color ?? theme.palette.primary.main
+        let sourceColor = AGENTFLOW_ICONS.find((icon) => icon.name === nodeName)?.color ?? theme.palette.primary.main
 
         let edgeLabel = undefined
         if (nodeName === 'conditionAgentflow' || nodeName === 'conditionAgentAgentflow') {
@@ -153,6 +172,8 @@ const AgentflowCanvas = () => {
         // Check if both source and target nodes are within the same iteration node
         const sourceNode = reactFlowInstance.getNodes().find((node) => node.id === params.source)
         const targetNode = reactFlowInstance.getNodes().find((node) => node.id === params.target)
+        sourceColor = sourceNode?.data?.accentColor || MEDIA_COLORS[sourceNode?.data?.mediaType] || sourceColor
+        targetColor = targetNode?.data?.accentColor || MEDIA_COLORS[targetNode?.data?.mediaType] || targetColor
         const isWithinIterationNode = sourceNode?.parentNode && targetNode?.parentNode && sourceNode.parentNode === targetNode.parentNode
 
         const newEdge = {
@@ -275,7 +296,41 @@ const AgentflowCanvas = () => {
                 return node
             })
         )
+        setEdges((currentEdges) =>
+            currentEdges.map((edge) => {
+                const sourceNode = nodes.find((node) => node.id === edge.source)
+                const targetNode = nodes.find((node) => node.id === edge.target)
+
+                return {
+                    ...edge,
+                    data: {
+                        ...edge.data,
+                        sourceColor:
+                            sourceNode?.data?.accentColor ||
+                            MEDIA_COLORS[sourceNode?.data?.mediaType] ||
+                            edge.data?.sourceColor ||
+                            '#22c55e',
+                        targetColor:
+                            targetNode?.data?.accentColor ||
+                            MEDIA_COLORS[targetNode?.data?.mediaType] ||
+                            edge.data?.targetColor ||
+                            '#3b82f6',
+                        hasActiveSelection: true,
+                        highlighted: edge.source === clickedNode.id || edge.target === clickedNode.id
+                    }
+                }
+            })
+        )
     })
+
+    const onCanvasPaneClick = useCallback(() => {
+        setEdges((currentEdges) =>
+            currentEdges.map((edge) => ({
+                ...edge,
+                data: { ...edge.data, hasActiveSelection: false, highlighted: false }
+            }))
+        )
+    }, [setEdges])
 
     // eslint-disable-next-line
     const onNodeDoubleClick = useCallback((event, node) => {
@@ -649,6 +704,55 @@ const AgentflowCanvas = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [templateFlowData])
 
+    const getToolbarNodePosition = () => {
+        if (!reactFlowInstance) return { x: 360, y: 220 }
+        const bounds = reactFlowWrapper.current?.getBoundingClientRect()
+        return reactFlowInstance.project({
+            x: (bounds?.width || window.innerWidth) / 2 - 180,
+            y: (bounds?.height || window.innerHeight) / 2 - 100
+        })
+    }
+
+    const addToolbarMediaNode = (mediaType) => {
+        const id = `workflowMedia_${mediaType}_${Date.now()}`
+        const labels = { image: 'Ảnh', video: 'Video', audio: 'Âm thanh' }
+        const mediaIndex = reactFlowInstance?.getNodes().filter((node) => node.type === 'workflowMedia').length || 0
+        const basePosition = getToolbarNodePosition()
+        const newNode = {
+            id,
+            type: 'workflowMedia',
+            position: { x: basePosition.x + mediaIndex * 420, y: basePosition.y },
+            selected: true,
+            style: { width: 360, height: 324 },
+            data: {
+                id,
+                mediaType,
+                accentColor: MEDIA_COLORS[mediaType],
+                label: labels[mediaType],
+                prompt: '',
+                model: mediaType === 'video' ? 'grok-imagine-video' : mediaType === 'image' ? 'grok-imagine-image' : 'audio-generator',
+                onChange: (patch) =>
+                    setNodes((items) => items.map((node) => (node.id === id ? { ...node, data: { ...node.data, ...patch } } : node)))
+            }
+        }
+        setNodes((items) => items.map((node) => ({ ...node, selected: false })).concat(newNode))
+        setDirty()
+    }
+
+    const addToolbarTextNode = () => {
+        const nodeData = getNodesApi.data?.find((node) => node.name === 'stickyNoteAgentflow')
+        if (!nodeData || !reactFlowInstance) return
+        const id = getUniqueNodeId(nodeData, reactFlowInstance.getNodes())
+        const newNode = {
+            id,
+            type: 'stickyNote',
+            position: getToolbarNodePosition(),
+            selected: true,
+            data: { ...initNode(cloneDeep(nodeData), id, true), label: 'Văn bản', selected: true }
+        }
+        setNodes((items) => items.map((node) => ({ ...node, selected: false })).concat(newNode))
+        setDirty()
+    }
     usePrompt('You have unsaved changes! Do you want to navigate away?', canvasDataStore.isDirty)
 
     const [chatPopupOpen, setChatPopupOpen] = useState(false)
@@ -722,6 +826,7 @@ const AgentflowCanvas = () => {
                                 edges={edges}
                                 onNodesChange={onNodesChange}
                                 onNodeClick={onNodeClick}
+                                onPaneClick={onCanvasPaneClick}
                                 onNodeDoubleClick={onNodeDoubleClick}
                                 onEdgesChange={onEdgesChange}
                                 onDrop={onDrop}
@@ -767,6 +872,94 @@ const AgentflowCanvas = () => {
                                     >
                                         {isBackgroundEnabled ? <IconArtboard /> : <IconArtboardOff />}
                                     </button>
+                                    <button
+                                        type='button'
+                                        className='react-flow__controls-button'
+                                        title='Bỏ chọn'
+                                        aria-label='Bỏ chọn'
+                                        onClick={() => {
+                                            setNodes((items) => items.map((node) => ({ ...node, selected: false })))
+                                            setEdges((items) => items.map((edge) => ({ ...edge, selected: false })))
+                                        }}
+                                    >
+                                        <IconHandStop />
+                                    </button>
+                                    <button
+                                        type='button'
+                                        className='react-flow__controls-button'
+                                        title='Hoàn tác'
+                                        aria-label='Hoàn tác'
+                                        disabled
+                                    >
+                                        <IconArrowBackUp />
+                                    </button>
+                                    <button
+                                        type='button'
+                                        className='react-flow__controls-button'
+                                        title='Làm lại'
+                                        aria-label='Làm lại'
+                                        disabled
+                                    >
+                                        <IconArrowForwardUp />
+                                    </button>
+                                    <button
+                                        type='button'
+                                        className='react-flow__controls-button'
+                                        title='Văn bản'
+                                        aria-label='Văn bản'
+                                        onClick={addToolbarTextNode}
+                                    >
+                                        <IconTypography />
+                                    </button>
+                                    <button
+                                        type='button'
+                                        className='react-flow__controls-button'
+                                        title='Ảnh'
+                                        aria-label='Ảnh'
+                                        onClick={() => addToolbarMediaNode('image')}
+                                    >
+                                        <IconPhoto />
+                                    </button>
+                                    <button
+                                        type='button'
+                                        className='react-flow__controls-button'
+                                        title='Video'
+                                        aria-label='Video'
+                                        onClick={() => addToolbarMediaNode('video')}
+                                    >
+                                        <IconVideo />
+                                    </button>
+                                    <button
+                                        type='button'
+                                        className='react-flow__controls-button'
+                                        title='Âm thanh'
+                                        aria-label='Âm thanh'
+                                        onClick={() => addToolbarMediaNode('audio')}
+                                    >
+                                        <IconMusic />
+                                    </button>
+                                    <button
+                                        type='button'
+                                        className='react-flow__controls-button'
+                                        title='Tải tài nguyên'
+                                        aria-label='Tải tài nguyên'
+                                        onClick={() => addToolbarMediaNode('image')}
+                                    >
+                                        <IconUpload />
+                                    </button>
+                                    <button
+                                        type='button'
+                                        className='react-flow__controls-button agentflow-control-danger'
+                                        title='Xóa mục đã chọn'
+                                        aria-label='Xóa mục đã chọn'
+                                        onClick={() => {
+                                            setNodes((items) => items.filter((node) => !node.selected && !node.data?.selected))
+                                            setEdges((items) => items.filter((edge) => !edge.selected))
+                                            setDirty()
+                                        }}
+                                    >
+                                        <IconTrash />
+                                    </button>{' '}
                                 </Controls>
                                 <MiniMap
                                     nodeStrokeWidth={3}

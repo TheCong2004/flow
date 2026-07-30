@@ -48,7 +48,7 @@ function AddNodesDrawerComponent({ nodes, onDragStart, onNodeClick }: AddNodesDr
 
     const [searchValue, setSearchValue] = useState('')
     const [filteredNodes, setFilteredNodes] = useState<Record<string, NodeDataSchema[]>>({})
-    const [open, setOpen] = useState(false)
+    const [open, setOpen] = useState(true)
     const [categoryExpanded, setCategoryExpanded] = useState<Record<string, boolean>>({})
 
     const anchorRef = useRef<HTMLButtonElement>(null)
@@ -143,6 +143,7 @@ function AddNodesDrawerComponent({ nodes, onDragStart, onNodeClick }: AddNodesDr
         <>
             <StyledFab
                 ref={anchorRef}
+                className='flow-editor-agent-add-node'
                 size='small'
                 color='primary'
                 aria-label='add'
@@ -156,10 +157,14 @@ function AddNodesDrawerComponent({ nodes, onDragStart, onNodeClick }: AddNodesDr
                 }}
             >
                 {open ? <IconMinus /> : <IconPlus />}
+                <Typography component='span' className='flow-editor-agent-add-label'>
+                    THÊM NODE
+                </Typography>
             </StyledFab>
 
             <Popper
-                placement='bottom-end'
+                className='flow-editor-agent-popper'
+                placement='bottom-start'
                 open={open}
                 anchorEl={anchorRef.current}
                 role={undefined}
@@ -181,6 +186,7 @@ function AddNodesDrawerComponent({ nodes, onDragStart, onNodeClick }: AddNodesDr
                     <Fade {...TransitionProps} timeout={200}>
                         <Paper
                             ref={paperRef}
+                            className='flow-editor-agent-node-panel'
                             sx={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -198,7 +204,7 @@ function AddNodesDrawerComponent({ nodes, onDragStart, onNodeClick }: AddNodesDr
                                 >
                                     <Box sx={{ p: 2, flexShrink: 0 }}>
                                         <Stack>
-                                            <Typography variant='h4'>Add Nodes</Typography>
+                                            <Typography variant='h4'>THÊM NODE</Typography>
                                         </Stack>
                                         <OutlinedInput
                                             sx={{ width: '100%', pr: 2, pl: 2, my: 2 }}

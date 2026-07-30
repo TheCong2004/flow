@@ -288,6 +288,15 @@ importers:
         specifier: ^6.0.4
         version: 6.0.4(typescript@5.5.2)
 
+  packages/client-sdk:
+    devDependencies:
+      rimraf:
+        specifier: ^5.0.5
+        version: 5.0.5
+      typescript:
+        specifier: ^5.4.5
+        version: 5.5.2
+
   packages/components:
     dependencies:
       '@anthropic-ai/sdk':

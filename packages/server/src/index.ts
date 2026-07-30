@@ -30,7 +30,8 @@ import { spawn } from 'child_process'
 import { Credential } from './database/entities/Credential'
 import { initWebhookListenerRegistry } from './services/webhook-listener'
 import flowiseApiV1Router from './routes'
-import { freeLLMRouter } from './freellmapi'
+import clientApiRouter from './client-api/routes'
+import { validateClientApiConfig } from './client-api/config'
 import { UsageCacheManager } from './UsageCacheManager'
 import { getEncryptionKey, getNodeModulesPackagePath, transformToCredentialEntity } from './utils'
 import { API_KEY_BLACKLIST_URLS, WHITELIST_URLS } from './utils/constants'
@@ -357,7 +358,12 @@ export class App {
             }
         }
 
+        validateClientApiConfig()
         this.app.use('/api/v1', flowiseApiV1Router)
+        if (process.env.CLIENT_API_ENABLED === 'true') {
+            this.app.use('/api/client/v1', clientApiRouter)
+            logger.info('Client API enabled at /api/client/v1')
+        }
 
         // ----------------------------------------
         // Configure number of proxies in Host Environment

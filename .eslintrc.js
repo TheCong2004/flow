@@ -24,6 +24,23 @@ module.exports = {
         'no-undef': 'off',
         'no-console': [process.env.CI ? 'error' : 'warn', { allow: ['warn', 'error', 'info'] }],
         'prettier/prettier': 'error',
-        'no-control-regex': 0 // Used to match control regex's in user input
-    }
+        'no-control-regex': 0
+    },
+    overrides: [
+        {
+            // Vendored Infinite Canvas uses non-native canvas interactions that
+            // do not map cleanly to jsx-a11y's DOM interaction model.
+            files: ['**/infinite-canvas-source/**/*.{js,jsx,ts,tsx}', '**/infiniteCanvasSource/**/*.{js,jsx,ts,tsx}'],
+            rules: {
+                'jsx-a11y/click-events-have-key-events': 'off',
+                'jsx-a11y/label-has-associated-control': 'off',
+                'jsx-a11y/media-has-caption': 'off',
+                'jsx-a11y/no-autofocus': 'off',
+                'jsx-a11y/no-noninteractive-element-interactions': 'off',
+                'jsx-a11y/no-noninteractive-element-to-interactive-role': 'off',
+                'jsx-a11y/no-static-element-interactions': 'off',
+                'no-empty': 'off'
+            }
+        }
+    ]
 }

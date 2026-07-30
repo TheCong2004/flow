@@ -1,4 +1,4 @@
-// assets
+﻿// assets
 import {
     IconList,
     IconUsersGroup,
@@ -7,7 +7,6 @@ import {
     IconKey,
     IconTool,
     IconLock,
-    IconRobot,
     IconSettings,
     IconVariable,
     IconFiles,
@@ -24,8 +23,7 @@ import {
     IconFileDatabase,
     IconShieldLock,
     IconListCheck,
-    IconCpu,
-    IconLayoutDashboard
+    IconCpu
 } from '@tabler/icons-react'
 
 // constant
@@ -38,7 +36,6 @@ const icons = {
     IconKey,
     IconTool,
     IconLock,
-    IconRobot,
     IconSettings,
     IconVariable,
     IconFiles,
@@ -95,15 +92,6 @@ const dashboard = {
                     icon: icons.IconListCheck,
                     breadcrumbs: true,
                     permission: 'executions:view'
-                },
-                {
-                    id: 'assistants',
-                    title: 'Assistants',
-                    type: 'item',
-                    url: '/assistants',
-                    icon: icons.IconRobot,
-                    breadcrumbs: true,
-                    permission: 'assistants:view'
                 },
                 {
                     id: 'marketplaces',
@@ -165,14 +153,6 @@ const dashboard = {
                     type: 'item',
                     url: '/freellmapi-dashboard',
                     icon: icons.IconCpu,
-                    breadcrumbs: true
-                },
-                {
-                    id: 'infinite-canvas',
-                    title: 'Infinite Canvas',
-                    type: 'item',
-                    url: '/infinite-canvas',
-                    icon: icons.IconLayoutDashboard,
                     breadcrumbs: true
                 }
             ]

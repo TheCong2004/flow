@@ -169,8 +169,12 @@ export class App {
             logger.info('⏰ [server]: ScheduleBeat initialized successfully')
 
             // Init Built-in FreeLLMAPI Service & Seed Credential
-            await this.ensureFreeLLMAPIStarted()
-            await this.seedFreeLLMAPICredential()
+            if (process.env.HEADLESS_MODE !== 'true') {
+                await this.ensureFreeLLMAPIStarted()
+                await this.seedFreeLLMAPICredential()
+            } else {
+                logger.info('🪶 [server]: Headless mode enabled; FreeLLMAPI startup skipped')
+            }
 
             logger.info('🎉 [server]: All initialization steps completed successfully!')
         } catch (error) {

@@ -35,8 +35,10 @@ COPY . .
 RUN pnpm install && \
     pnpm build:docker
 
-# Runtime memory limit for Node V8 heap
+# Runtime memory limit and networking for Node V8 heap
 ENV NODE_OPTIONS=--max-old-space-size=320
+ENV PORT=3000
+ENV HOST=0.0.0.0
 
 # Give the node user ownership of the application files
 RUN chown -R node:node .

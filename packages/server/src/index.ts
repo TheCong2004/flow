@@ -183,7 +183,7 @@ export class App {
         }
     }
 
-    configBasic() {
+    async config() {
         // Limit is needed to allow sending/receiving base64 encoded string
         const flowise_file_size_limit = process.env.FLOWISE_FILE_SIZE_LIMIT || '50mb'
 
@@ -256,29 +256,6 @@ export class App {
         // Add the sanitizeMiddleware to guard against XSS
         this.app.use(sanitizeMiddleware)
 
-        // Serve UI static
-        const packagePath = getNodeModulesPackagePath('flowise-ui')
-        const uiBuildPath = path.join(packagePath, 'build')
-        const uiHtmlPath = path.join(packagePath, 'build', 'index.html')
-
-        logger.info(`🌐 [server]: Serving UI static files from ${uiBuildPath}`)
-
-        this.app.use('/', express.static(uiBuildPath))
-
-        // Return React app for root and non-api routes
-        this.app.use((req: Request, res: Response, next: any) => {
-            if (req.path.startsWith('/api/v1') || req.path.startsWith('/api/client/v1')) {
-                return next()
-            }
-            if (fs.existsSync(uiHtmlPath)) {
-                res.sendFile(uiHtmlPath)
-            } else {
-                res.status(404).send('Flowise UI build files not found.')
-            }
-        })
-    }
-
-    async configAuthAndRoutes() {
         const denylistURLs = process.env.DENYLIST_URLS ? process.env.DENYLIST_URLS.split(',') : []
         const whitelistURLs = WHITELIST_URLS.filter((url) => !denylistURLs.includes(url))
         const URL_CASE_INSENSITIVE_REGEX: RegExp = /\/api\/v1\//i
@@ -400,12 +377,25 @@ export class App {
             this.app.use('/admin/queues', rateLimiter, verifyTokenForBullMQDashboard, this.queueManager.getBullBoardRouter())
         }
 
-        this.app.use(errorHandlerMiddleware)
-    }
+        // Serve UI static
+        const packagePath = getNodeModulesPackagePath('flowise-ui')
+        const uiBuildPath = path.join(packagePath, 'build')
+        const uiHtmlPath = path.join(packagePath, 'build', 'index.html')
 
-    async config() {
-        this.configBasic()
-        await this.configAuthAndRoutes()
+        logger.info(`🌐 [server]: Serving UI static files from ${uiBuildPath}`)
+
+        this.app.use('/', express.static(uiBuildPath))
+
+        // Return React app for root and non-api routes
+        this.app.use((req: Request, res: Response) => {
+            if (fs.existsSync(uiHtmlPath)) {
+                res.sendFile(uiHtmlPath)
+            } else {
+                res.status(404).send('Flowise UI build files not found.')
+            }
+        })
+
+        this.app.use(errorHandlerMiddleware)
     }
 
     async stopApp() {
@@ -500,9 +490,6 @@ export async function start(): Promise<void> {
     const port = 3000
     const server = http.createServer(serverApp.app)
 
-    // Instantly register Express parsers & Static React UI (< 2ms)
-    serverApp.configBasic()
-
     server.on('error', (err: any) => {
         if (err.code === 'EADDRINUSE') {
             logger.warn(`⚠️ [server]: Port ${port} is currently busy, retrying listen in 1.5s...`)
@@ -515,17 +502,16 @@ export async function start(): Promise<void> {
         }
     })
 
-    // Open port 3000 immediately so Northflank proxy receives HTTP connections instantly
-    server.listen(port, host, () => {
-        logger.info(`⚡️ [server]: Flowise Server is listening at http://${host}:${port}`)
-    })
-
     try {
         await serverApp.initDatabase()
-        await serverApp.configAuthAndRoutes()
+        await serverApp.config()
     } catch (err) {
         logger.error('❌ [server]: Error during server initialization:', err)
     }
+
+    server.listen(port, host, () => {
+        logger.info(`⚡️ [server]: Flowise Server is listening at http://${host}:${port}`)
+    })
 }
 
 export function getInstance(): App | undefined {

@@ -132,15 +132,24 @@ export const getUserHome = (): string => {
  */
 export const getNodeModulesPackagePath = (packageName: string): string => {
     const checkPaths = [
+        path.join(process.cwd(), 'packages', 'ui'),
+        path.join(process.cwd(), 'ui'),
+        path.resolve(__dirname, '../../../packages/ui'),
+        path.resolve(__dirname, '../../../ui'),
+        path.resolve(__dirname, '../../packages/ui'),
+        path.resolve(__dirname, '../../ui'),
         path.join(__dirname, '..', '..', 'ui'),
-        path.join(__dirname, '..', '..', 'packages', 'ui'),
-        path.join(__dirname, '..', '..', '..', 'packages', 'ui'),
         path.join(__dirname, '..', 'node_modules', packageName),
         path.join(__dirname, '..', '..', 'node_modules', packageName),
         path.join(__dirname, '..', '..', '..', 'node_modules', packageName),
         path.join(__dirname, '..', '..', '..', '..', 'node_modules', packageName),
-        path.join(__dirname, '..', '..', '..', '..', '..', 'node_modules', packageName)
+        path.join(process.cwd(), 'node_modules', packageName)
     ]
+    for (const checkPath of checkPaths) {
+        if (fs.existsSync(checkPath) && fs.existsSync(path.join(checkPath, 'build', 'index.html'))) {
+            return checkPath
+        }
+    }
     for (const checkPath of checkPaths) {
         if (fs.existsSync(checkPath)) {
             return checkPath

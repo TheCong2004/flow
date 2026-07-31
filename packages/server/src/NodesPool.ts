@@ -37,53 +37,88 @@ export class NodesPool {
         const disabled_nodes = process.env.DISABLED_NODES ? process.env.DISABLED_NODES.split(',') : []
         const nodes: IComponentNodes = {}
         const nodeFiles = await this.getFiles(dir)
+
+        const defaults = [
+            'chatopenai',
+            'chatopenrouter',
+            'chatanthropic',
+            'chatgooglegenerativeai',
+            'prompttemplate',
+            'chatprompttemplate',
+            'llmchain',
+            'conversationchain',
+            'buffermemory'
+        ]
+
+        let liteNodesFilter: string[] | null = null
+        if (process.env.LITE_NODE_ALLOWLIST) {
+            liteNodesFilter = process.env.LITE_NODE_ALLOWLIST.split(',')
+                .map((name) => name.trim().toLowerCase())
+                .filter(Boolean)
+        } else if (process.env.HEADLESS_MODE === 'true' || process.env.LITE_MODE === 'true') {
+            liteNodesFilter = defaults
+        }
+
         await Promise.all(
             nodeFiles.map(async (file) => {
-                if (file.endsWith('.js')) {
-                    try {
-                        const nodeModule = await require(file)
+                if (!file.endsWith('.js')) return
 
-                        if (nodeModule.nodeClass) {
-                            const newNodeInstance = new nodeModule.nodeClass()
-                            newNodeInstance.filePath = file
+                const fileLower = file.toLowerCase()
+                if (liteNodesFilter && liteNodesFilter.length > 0 && !liteNodesFilter.includes('*')) {
+                    const isAllowed = liteNodesFilter.some((name) => fileLower.includes(name))
+                    if (!isAllowed) {
+                        return
+                    }
+                }
 
-                            // Replace file icon with absolute path
-                            if (
-                                newNodeInstance.icon &&
-                                (newNodeInstance.icon.endsWith('.svg') ||
-                                    newNodeInstance.icon.endsWith('.png') ||
-                                    newNodeInstance.icon.endsWith('.jpg'))
-                            ) {
-                                const filePath = file.replace(/\\/g, '/').split('/')
-                                filePath.pop()
-                                const nodeIconAbsolutePath = `${filePath.join('/')}/${newNodeInstance.icon}`
-                                newNodeInstance.icon = nodeIconAbsolutePath
+                try {
+                    const nodeModule = await require(file)
+                    if (nodeModule.nodeClass) {
+                        const newNodeInstance = new nodeModule.nodeClass()
+                        newNodeInstance.filePath = file
 
-                                // Store icon path for componentCredentials
-                                if (newNodeInstance.credential) {
-                                    for (const credName of newNodeInstance.credential.credentialNames) {
-                                        this.credentialIconPath[credName] = nodeIconAbsolutePath
-                                    }
+                        const nodeNameLower = newNodeInstance.name.toLowerCase()
+                        if (liteNodesFilter && liteNodesFilter.length > 0 && !liteNodesFilter.includes('*')) {
+                            const isAllowed = liteNodesFilter.some((name) => fileLower.includes(name) || nodeNameLower.includes(name))
+                            if (!isAllowed) return
+                        }
+
+                        // Replace file icon with absolute path
+                        if (
+                            newNodeInstance.icon &&
+                            (newNodeInstance.icon.endsWith('.svg') ||
+                                newNodeInstance.icon.endsWith('.png') ||
+                                newNodeInstance.icon.endsWith('.jpg'))
+                        ) {
+                            const filePath = file.replace(/\\/g, '/').split('/')
+                            filePath.pop()
+                            const nodeIconAbsolutePath = `${filePath.join('/')}/${newNodeInstance.icon}`
+                            newNodeInstance.icon = nodeIconAbsolutePath
+
+                            // Store icon path for componentCredentials
+                            if (newNodeInstance.credential) {
+                                for (const credName of newNodeInstance.credential.credentialNames) {
+                                    this.credentialIconPath[credName] = nodeIconAbsolutePath
                                 }
                             }
-
-                            const skipCategories = ['Analytic', 'SpeechToText']
-                            const conditionOne = !skipCategories.includes(newNodeInstance.category)
-
-                            const isCommunityNodesAllowed = appConfig.showCommunityNodes
-                            const isAuthorPresent = newNodeInstance.author
-                            let conditionTwo = true
-                            if (!isCommunityNodesAllowed && isAuthorPresent) conditionTwo = false
-
-                            const isDisabled = disabled_nodes.includes(newNodeInstance.name)
-
-                            if (conditionOne && conditionTwo && !isDisabled) {
-                                nodes[newNodeInstance.name] = newNodeInstance
-                            }
                         }
-                    } catch (err) {
-                        logger.error(`❌ [server]: Error during initDatabase with file ${file}:`, err)
+
+                        const skipCategories = ['Analytic', 'SpeechToText']
+                        const conditionOne = !skipCategories.includes(newNodeInstance.category)
+
+                        const isCommunityNodesAllowed = appConfig.showCommunityNodes
+                        const isAuthorPresent = newNodeInstance.author
+                        let conditionTwo = true
+                        if (!isCommunityNodesAllowed && isAuthorPresent) conditionTwo = false
+
+                        const isDisabled = disabled_nodes.includes(newNodeInstance.name)
+
+                        if (conditionOne && conditionTwo && !isDisabled) {
+                            nodes[newNodeInstance.name] = newNodeInstance
+                        }
                     }
+                } catch (err) {
+                    logger.error(`❌ [server]: Error during initDatabase with file ${file}:`, err)
                 }
             })
         )

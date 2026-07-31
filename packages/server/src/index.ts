@@ -507,8 +507,8 @@ let serverApp: App | undefined
 export async function start(): Promise<void> {
     serverApp = new App()
 
-    const host = process.env.HOST || '0.0.0.0'
-    const port = parseInt(process.env.PORT || '3000', 10)
+    const host = '0.0.0.0'
+    const port = 3000
     const server = http.createServer(serverApp.app)
 
     await serverApp.config()

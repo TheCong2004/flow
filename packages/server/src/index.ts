@@ -449,15 +449,23 @@ export class App {
     }
 
     spawnFreeLLM(resolve: () => void) {
-        logger.info('🚀 [FreeLLMAPI]: Auto-starting built-in FreeLLMAPI background service...')
-        const freellmDir = path.resolve(__dirname, '../../../freellmapi')
-        const child = spawn('npm.cmd', ['run', 'dev', '-w', 'server'], {
-            cwd: freellmDir,
-            stdio: 'ignore',
-            shell: true,
-            detached: true
-        })
-        child.unref()
+        try {
+            logger.info('🚀 [FreeLLMAPI]: Auto-starting built-in FreeLLMAPI background service...')
+            const freellmDir = path.resolve(__dirname, '../../../freellmapi')
+            const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+            const child = spawn(npmCmd, ['run', 'dev', '-w', 'server'], {
+                cwd: freellmDir,
+                stdio: 'ignore',
+                shell: true,
+                detached: true
+            })
+            child.on('error', (err) => {
+                logger.warn('⚠️ [FreeLLMAPI]: Error spawning FreeLLMAPI process:', err.message)
+            })
+            child.unref()
+        } catch (err: any) {
+            logger.warn('⚠️ [FreeLLMAPI]: Failed to spawn FreeLLMAPI:', err?.message)
+        }
         setTimeout(() => resolve(), 3000)
     }
 
@@ -496,9 +504,6 @@ export async function start(): Promise<void> {
     const port = parseInt(process.env.PORT || '3000', 10)
     const server = http.createServer(serverApp.app)
 
-    await serverApp.initDatabase()
-    await serverApp.config()
-
     server.on('error', (err: any) => {
         if (err.code === 'EADDRINUSE') {
             logger.warn(`⚠️ [server]: Port ${port} is currently busy, retrying listen in 1.5s...`)
@@ -511,9 +516,13 @@ export async function start(): Promise<void> {
         }
     })
 
+    // Start listening on port 3000 immediately so load balancers don't get Connection Refused
     server.listen(port, host, () => {
         logger.info(`⚡️ [server]: Flowise Server is listening at ${host ? 'http://' + host : ''}:${port}`)
     })
+
+    await serverApp.initDatabase()
+    await serverApp.config()
 }
 
 export function getInstance(): App | undefined {

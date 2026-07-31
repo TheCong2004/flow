@@ -3,8 +3,8 @@ import authController from '../../controllers/auth'
 const router = express.Router()
 
 // RBAC
-router.get(['/sso-success'], authController.ssoSuccess)
+router.all(['/sso-success'], authController.ssoSuccess)
 
-router.get(['/:type', '/permissions/:type'], authController.getAllPermissions)
+router.all(['/:type', '/permissions/:type'], authController.getAllPermissions)
 
 export default router

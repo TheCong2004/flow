@@ -183,7 +183,7 @@ export class App {
         }
     }
 
-    async config() {
+    configBasic() {
         // Limit is needed to allow sending/receiving base64 encoded string
         const flowise_file_size_limit = process.env.FLOWISE_FILE_SIZE_LIMIT || '50mb'
 
@@ -197,13 +197,10 @@ export class App {
         // Enhanced trust proxy settings for load balancer
         let trustProxy: string | boolean | number | undefined = process.env.TRUST_PROXY
         if (typeof trustProxy === 'undefined' || trustProxy.trim() === '' || trustProxy === 'true') {
-            // Default to trust all proxies
             trustProxy = true
         } else if (trustProxy === 'false') {
-            // Disable trust proxy
             trustProxy = false
         } else if (!isNaN(Number(trustProxy))) {
-            // Number: Trust specific number of proxies
             trustProxy = Number(trustProxy)
         }
 
@@ -259,6 +256,29 @@ export class App {
         // Add the sanitizeMiddleware to guard against XSS
         this.app.use(sanitizeMiddleware)
 
+        // Serve UI static
+        const packagePath = getNodeModulesPackagePath('flowise-ui')
+        const uiBuildPath = path.join(packagePath, 'build')
+        const uiHtmlPath = path.join(packagePath, 'build', 'index.html')
+
+        logger.info(`🌐 [server]: Serving UI static files from ${uiBuildPath}`)
+
+        this.app.use('/', express.static(uiBuildPath))
+
+        // Return React app for root and non-api routes
+        this.app.use((req: Request, res: Response, next: any) => {
+            if (req.path.startsWith('/api/v1') || req.path.startsWith('/api/client/v1')) {
+                return next()
+            }
+            if (fs.existsSync(uiHtmlPath)) {
+                res.sendFile(uiHtmlPath)
+            } else {
+                res.status(404).send('Flowise UI build files not found.')
+            }
+        })
+    }
+
+    async configAuthAndRoutes() {
         const denylistURLs = process.env.DENYLIST_URLS ? process.env.DENYLIST_URLS.split(',') : []
         const whitelistURLs = WHITELIST_URLS.filter((url) => !denylistURLs.includes(url))
         const URL_CASE_INSENSITIVE_REGEX: RegExp = /\/api\/v1\//i
@@ -267,11 +287,8 @@ export class App {
         await initializeJwtCookieMiddleware(this.app, this.identityManager)
 
         this.app.use(async (req, res, next) => {
-            // Step 1: Check if the req path contains /api/v1 regardless of case
             if (URL_CASE_INSENSITIVE_REGEX.test(req.path)) {
-                // Step 2: Check if the req path is casesensitive
                 if (URL_CASE_SENSITIVE_REGEX.test(req.path)) {
-                    // Step 3: Check if the req path is in the whitelist
                     const isWhitelisted = whitelistURLs.some((url) => req.path.startsWith(url))
                     if (isWhitelisted) {
                         next()
@@ -283,7 +300,6 @@ export class App {
                             return res.status(401).json({ error: 'Unauthorized Access' })
                         }
 
-                        // Only check license validity for non-open-source platforms
                         if (this.identityManager.getPlatformType() !== Platform.OPEN_SOURCE) {
                             if (!this.identityManager.isLicenseValid()) {
                                 return res.status(401).json({ error: 'Unauthorized Access' })
@@ -295,7 +311,6 @@ export class App {
                             return res.status(401).json({ error: 'Unauthorized Access' })
                         }
 
-                        // Find workspace
                         const workspace = await this.AppDataSource.getRepository(Workspace).findOne({
                             where: { id: apiKey.workspaceId }
                         })
@@ -303,7 +318,6 @@ export class App {
                             return res.status(401).json({ error: 'Unauthorized Access' })
                         }
 
-                        // Find organization
                         const activeOrganizationId = workspace.organizationId as string
                         const org = await this.AppDataSource.getRepository(Organization).findOne({
                             where: { id: activeOrganizationId }
@@ -333,17 +347,14 @@ export class App {
                     return res.status(401).json({ error: 'Unauthorized Access' })
                 }
             } else {
-                // If the req path does not contain /api/v1, then allow the request to pass through, example: /assets, /canvas
                 next()
             }
         })
 
-        // this is for SSO and must be after the JWT cookie middleware
         await this.identityManager.initializeSSO(this.app)
 
         if (process.env.ENABLE_METRICS === 'true') {
             switch (process.env.METRICS_PROVIDER) {
-                // default to prometheus
                 case 'prometheus':
                 case undefined:
                     this.metricsProvider = new Prometheus(this.app)
@@ -351,7 +362,6 @@ export class App {
                 case 'open_telemetry':
                     this.metricsProvider = new OpenTelemetry(this.app)
                     break
-                // add more cases for other metrics providers here
             }
             if (this.metricsProvider) {
                 await this.metricsProvider.initializeCounters()
@@ -370,18 +380,14 @@ export class App {
             logger.info('Client API enabled at /api/client/v1')
         }
 
-        // ----------------------------------------
-        // Configure number of proxies in Host Environment
-        // ----------------------------------------
         this.app.get('/api/v1/ip', (request, response) => {
             response.send({
                 ip: request.ip,
-                msg: 'Check returned IP address in the response. If it matches your current IP address ( which you can get by going to http://ip.nfriedly.com/ or https://api.ipify.org/ ), then the number of proxies is correct and the rate limiter should now work correctly. If not, increase the number of proxies by 1 and restart Cloud-Hosted Flowise until the IP address matches your own. Visit https://docs.flowiseai.com/configuration/rate-limit#cloud-hosted-rate-limit-setup-guide for more information.'
+                msg: 'Check returned IP address in the response.'
             })
         })
 
         if (process.env.MODE === MODE.QUEUE && process.env.ENABLE_BULLMQ_DASHBOARD === 'true' && !this.identityManager.isCloud()) {
-            // Initialize admin queues rate limiter
             const id = 'bullmq_admin_dashboard'
             await this.rateLimiterManager.addRateLimiter(
                 id,
@@ -394,29 +400,12 @@ export class App {
             this.app.use('/admin/queues', rateLimiter, verifyTokenForBullMQDashboard, this.queueManager.getBullBoardRouter())
         }
 
-        // ----------------------------------------
-        // Serve UI static
-        // ----------------------------------------
-
-        const packagePath = getNodeModulesPackagePath('flowise-ui')
-        const uiBuildPath = path.join(packagePath, 'build')
-        const uiHtmlPath = path.join(packagePath, 'build', 'index.html')
-
-        logger.info(`🌐 [server]: Serving UI static files from ${uiBuildPath}`)
-
-        this.app.use('/', express.static(uiBuildPath))
-
-        // All other requests not handled will return React app
-        this.app.use((req: Request, res: Response) => {
-            if (fs.existsSync(uiHtmlPath)) {
-                res.sendFile(uiHtmlPath)
-            } else {
-                res.status(404).send('Flowise UI build files not found.')
-            }
-        })
-
-        // Error handling
         this.app.use(errorHandlerMiddleware)
+    }
+
+    async config() {
+        this.configBasic()
+        await this.configAuthAndRoutes()
     }
 
     async stopApp() {
@@ -511,6 +500,9 @@ export async function start(): Promise<void> {
     const port = 3000
     const server = http.createServer(serverApp.app)
 
+    // Instantly register Express parsers & Static React UI (< 2ms)
+    serverApp.configBasic()
+
     server.on('error', (err: any) => {
         if (err.code === 'EADDRINUSE') {
             logger.warn(`⚠️ [server]: Port ${port} is currently busy, retrying listen in 1.5s...`)
@@ -530,7 +522,7 @@ export async function start(): Promise<void> {
 
     try {
         await serverApp.initDatabase()
-        await serverApp.config()
+        await serverApp.configAuthAndRoutes()
     } catch (err) {
         logger.error('❌ [server]: Error during server initialization:', err)
     }

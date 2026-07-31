@@ -131,25 +131,43 @@ export const getUserHome = (): string => {
  * @returns {string}
  */
 export const getNodeModulesPackagePath = (packageName: string): string => {
-    const checkPaths = [
-        path.join(process.cwd(), 'packages', 'ui'),
-        path.join(process.cwd(), 'ui'),
-        path.resolve(__dirname, '../../../packages/ui'),
-        path.resolve(__dirname, '../../../ui'),
-        path.resolve(__dirname, '../../packages/ui'),
-        path.resolve(__dirname, '../../ui'),
-        path.join(__dirname, '..', '..', 'ui'),
+    let checkPaths: string[] = []
+    if (packageName === 'flowise-ui') {
+        checkPaths = [
+            path.join(process.cwd(), 'packages', 'ui'),
+            path.join(process.cwd(), 'ui'),
+            path.resolve(__dirname, '../../../packages/ui'),
+            path.resolve(__dirname, '../../../ui'),
+            path.resolve(__dirname, '../../packages/ui'),
+            path.resolve(__dirname, '../../ui')
+        ]
+    } else if (packageName === 'flowise-components') {
+        checkPaths = [
+            path.join(process.cwd(), 'packages', 'components'),
+            path.join(process.cwd(), 'components'),
+            path.resolve(__dirname, '../../../packages/components'),
+            path.resolve(__dirname, '../../../components'),
+            path.resolve(__dirname, '../../packages/components'),
+            path.resolve(__dirname, '../../components')
+        ]
+    }
+
+    checkPaths.push(
         path.join(__dirname, '..', 'node_modules', packageName),
         path.join(__dirname, '..', '..', 'node_modules', packageName),
         path.join(__dirname, '..', '..', '..', 'node_modules', packageName),
         path.join(__dirname, '..', '..', '..', '..', 'node_modules', packageName),
         path.join(process.cwd(), 'node_modules', packageName)
-    ]
-    for (const checkPath of checkPaths) {
-        if (fs.existsSync(checkPath) && fs.existsSync(path.join(checkPath, 'build', 'index.html'))) {
-            return checkPath
+    )
+
+    if (packageName === 'flowise-ui') {
+        for (const checkPath of checkPaths) {
+            if (fs.existsSync(checkPath) && fs.existsSync(path.join(checkPath, 'build', 'index.html'))) {
+                return checkPath
+            }
         }
     }
+
     for (const checkPath of checkPaths) {
         if (fs.existsSync(checkPath)) {
             return checkPath

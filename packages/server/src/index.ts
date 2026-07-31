@@ -511,8 +511,6 @@ export async function start(): Promise<void> {
     const port = 3000
     const server = http.createServer(serverApp.app)
 
-    await serverApp.config()
-
     server.on('error', (err: any) => {
         if (err.code === 'EADDRINUSE') {
             logger.warn(`⚠️ [server]: Port ${port} is currently busy, retrying listen in 1.5s...`)
@@ -525,16 +523,16 @@ export async function start(): Promise<void> {
         }
     })
 
-    // Start listening on port 3000 with Express routes already registered
+    try {
+        await serverApp.initDatabase()
+        await serverApp.config()
+    } catch (err) {
+        logger.error('❌ [server]: Error during server initialization:', err)
+    }
+
     server.listen(port, host, () => {
         logger.info(`⚡️ [server]: Flowise Server is listening at ${host ? 'http://' + host : ''}:${port}`)
     })
-
-    try {
-        await serverApp.initDatabase()
-    } catch (err) {
-        logger.error('❌ [server]: Error during server database initialization:', err)
-    }
 }
 
 export function getInstance(): App | undefined {

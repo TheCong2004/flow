@@ -40,7 +40,7 @@ const getAllPermissions = async (req: Request, res: Response, next: NextFunction
 
         // Feature-based filtering for Cloud platform
         if (type !== 'ROLE' && appServer.identityManager.getPlatformType() === Platform.CLOUD) {
-            const userFeatures = user.features
+            const userFeatures = user?.features
             if (userFeatures) {
                 const disabledFeatures = Object.entries(userFeatures).filter(([, value]) => value === 'false')
 

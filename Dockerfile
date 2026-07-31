@@ -46,4 +46,4 @@ USER node
 
 EXPOSE 3000
 
-CMD [ "node", "packages/server/bin/run", "start" ]
+CMD [ "node", "-e", "require('./packages/server/dist/index.js').start()" ]

@@ -83,6 +83,12 @@ export class App {
     sessionStore: any
     constructor() {
         this.app = express()
+        this.nodesPool = new NodesPool()
+        this.abortControllerPool = new AbortControllerPool()
+        this.cachePool = new CachePool()
+        this.telemetry = new Telemetry()
+        this.sseStreamer = new SSEStreamer()
+        this.rateLimiterManager = RateLimiterManager.getInstance()
     }
 
     async initDatabase() {

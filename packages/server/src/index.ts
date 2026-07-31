@@ -5,6 +5,7 @@ import express, { Request, Response } from 'express'
 import 'global-agent/bootstrap'
 import http from 'http'
 import path from 'path'
+import fs from 'fs'
 import { DataSource } from 'typeorm'
 import { AbortControllerPool } from './AbortControllerPool'
 import { CachePool } from './CachePool'
@@ -401,11 +402,17 @@ export class App {
         const uiBuildPath = path.join(packagePath, 'build')
         const uiHtmlPath = path.join(packagePath, 'build', 'index.html')
 
+        logger.info(`🌐 [server]: Serving UI static files from ${uiBuildPath}`)
+
         this.app.use('/', express.static(uiBuildPath))
 
         // All other requests not handled will return React app
         this.app.use((req: Request, res: Response) => {
-            res.sendFile(uiHtmlPath)
+            if (fs.existsSync(uiHtmlPath)) {
+                res.sendFile(uiHtmlPath)
+            } else {
+                res.status(404).send('Flowise UI build files not found.')
+            }
         })
 
         // Error handling

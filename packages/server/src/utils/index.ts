@@ -133,6 +133,8 @@ export const getUserHome = (): string => {
 export const getNodeModulesPackagePath = (packageName: string): string => {
     const checkPaths = [
         path.join(__dirname, '..', '..', 'ui'),
+        path.join(__dirname, '..', '..', 'packages', 'ui'),
+        path.join(__dirname, '..', '..', '..', 'packages', 'ui'),
         path.join(__dirname, '..', 'node_modules', packageName),
         path.join(__dirname, '..', '..', 'node_modules', packageName),
         path.join(__dirname, '..', '..', '..', 'node_modules', packageName),

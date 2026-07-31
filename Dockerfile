@@ -48,4 +48,4 @@ USER node
 
 EXPOSE 3000
 
-CMD [ "node", "-e", "require('./packages/server/dist/index.js').start()" ]
+CMD [ "node", "-e", "require('./packages/server/dist/index.js').start().catch(console.error)" ]

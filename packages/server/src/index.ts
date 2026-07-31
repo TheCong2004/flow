@@ -521,8 +521,12 @@ export async function start(): Promise<void> {
         logger.info(`⚡️ [server]: Flowise Server is listening at ${host ? 'http://' + host : ''}:${port}`)
     })
 
-    await serverApp.initDatabase()
-    await serverApp.config()
+    try {
+        await serverApp.initDatabase()
+        await serverApp.config()
+    } catch (err) {
+        logger.error('❌ [server]: Error during server initialization:', err)
+    }
 }
 
 export function getInstance(): App | undefined {

@@ -39,6 +39,7 @@ RUN pnpm install && \
 ENV NODE_OPTIONS=--max-old-space-size=320
 ENV PORT=3000
 ENV HOST=0.0.0.0
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
 # Give the node user ownership of the application files
 RUN chown -R node:node .

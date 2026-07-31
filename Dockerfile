@@ -23,7 +23,7 @@ RUN apk update && \
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-ENV NODE_OPTIONS=--max-old-space-size=320
+ENV NODE_OPTIONS=--max-old-space-size=4096
 ENV HOST=0.0.0.0
 
 WORKDIR /usr/src/flowise
@@ -34,6 +34,9 @@ COPY . .
 # Install dependencies and build (excluding sdk packages not needed for Docker)
 RUN pnpm install && \
     pnpm build:docker
+
+# Runtime memory limit for Node V8 heap
+ENV NODE_OPTIONS=--max-old-space-size=320
 
 # Give the node user ownership of the application files
 RUN chown -R node:node .

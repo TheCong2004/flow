@@ -132,15 +132,36 @@ export class NodesPool {
         const packagePath = getNodeModulesPackagePath('flowise-components')
         const nodesPath = path.join(packagePath, 'dist', 'credentials')
         const nodeFiles = await this.getFiles(nodesPath)
+
+        const defaults = ['openai', 'google', 'anthropic', 'openrouter']
+        let liteCredsFilter: string[] | null = null
+        if (process.env.LITE_NODE_ALLOWLIST) {
+            liteCredsFilter = process.env.LITE_NODE_ALLOWLIST.split(',')
+                .map((name) => name.trim().toLowerCase())
+                .filter(Boolean)
+        } else if (process.env.HEADLESS_MODE === 'true' || process.env.LITE_MODE === 'true') {
+            liteCredsFilter = defaults
+        }
+
         return Promise.all(
             nodeFiles.map(async (file) => {
-                if (file.endsWith('.credential.js')) {
+                if (!file.endsWith('.credential.js')) return
+
+                const fileLower = file.toLowerCase()
+                if (liteCredsFilter && liteCredsFilter.length > 0 && !liteCredsFilter.includes('*')) {
+                    const isAllowed = liteCredsFilter.some((name) => fileLower.includes(name))
+                    if (!isAllowed) return
+                }
+
+                try {
                     const credentialModule = await require(file)
                     if (credentialModule.credClass) {
                         const newCredInstance = new credentialModule.credClass()
                         newCredInstance.icon = this.credentialIconPath[newCredInstance.name] ?? ''
                         this.componentCredentials[newCredInstance.name] = newCredInstance
                     }
+                } catch (err) {
+                    logger.error(`❌ [server]: Error initializing credential ${file}:`, err)
                 }
             })
         )

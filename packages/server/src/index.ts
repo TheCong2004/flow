@@ -523,16 +523,17 @@ export async function start(): Promise<void> {
         }
     })
 
+    // Open port 3000 immediately so Northflank proxy receives HTTP connections instantly
+    server.listen(port, host, () => {
+        logger.info(`⚡️ [server]: Flowise Server is listening at http://${host}:${port}`)
+    })
+
     try {
         await serverApp.initDatabase()
         await serverApp.config()
     } catch (err) {
         logger.error('❌ [server]: Error during server initialization:', err)
     }
-
-    server.listen(port, host, () => {
-        logger.info(`⚡️ [server]: Flowise Server is listening at ${host ? 'http://' + host : ''}:${port}`)
-    })
 }
 
 export function getInstance(): App | undefined {

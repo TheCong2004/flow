@@ -81,12 +81,19 @@ export class App {
     redisSubscriber: RedisEventSubscriber
     usageCacheManager: UsageCacheManager
     sessionStore: any
-
     constructor() {
         this.app = express()
     }
 
     async initDatabase() {
+        // Initialize auth secrets (env → AWS Secrets Manager → filesystem)
+        try {
+            await initAuthSecrets()
+            logger.info('🔐 [server]: Auth initialized successfully')
+        } catch (err) {
+            logger.error('❌ [server]: Error initializing auth secrets:', err)
+        }
+
         // Initialize database
         try {
             await this.AppDataSource.initialize()
@@ -112,10 +119,6 @@ export class App {
             // Initialize encryption key
             await getEncryptionKey()
             logger.info('🔑 [server]: Encryption key initialized successfully')
-
-            // Initialize auth secrets (env → AWS Secrets Manager → filesystem)
-            await initAuthSecrets()
-            logger.info('🔐 [server]: Auth initialized successfully')
 
             // Initialize Rate Limit
             this.rateLimiterManager = RateLimiterManager.getInstance()

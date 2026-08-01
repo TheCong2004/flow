@@ -280,6 +280,18 @@ export class App {
         this.app.use(async (req, res, next) => {
             if (URL_CASE_INSENSITIVE_REGEX.test(req.path)) {
                 if (URL_CASE_SENSITIVE_REGEX.test(req.path)) {
+                    const isOpenSource = !this.identityManager || this.identityManager.isOpenSource()
+                    const isAuthDisabled = isOpenSource && !process.env.FLOWISE_USERNAME && !process.env.FLOWISE_PASSWORD
+                    if (isAuthDisabled) {
+                        req.user = {
+                            id: 'default',
+                            activeWorkspaceId: 'default',
+                            activeOrganizationId: 'default',
+                            permissions: [],
+                            features: {}
+                        } as any
+                        return next()
+                    }
                     const isWhitelisted = whitelistURLs.some((url) => req.path.startsWith(url))
                     if (isWhitelisted) {
                         next()

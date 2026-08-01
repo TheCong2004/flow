@@ -11,6 +11,7 @@ import { InternalFlowiseError } from '../../../errors/internalFlowiseError'
 import { IdentityManager } from '../../../IdentityManager'
 import { Platform } from '../../../Interface'
 import { getRunningExpressApp } from '../../../utils/getRunningExpressApp'
+import logger from '../../../utils/logger'
 import { OrganizationUserStatus } from '../../database/entities/organization-user.entity'
 import { GeneralRole } from '../../database/entities/role.entity'
 import { WorkspaceUser, WorkspaceUserStatus } from '../../database/entities/workspace-user.entity'
@@ -200,35 +201,50 @@ export const initializeJwtCookieMiddleware = async (app: express.Application, id
     app.post('/api/v1/auth/resolve', async (req, res) => {
         // check for the organization, if empty redirect to the organization setup page for OpenSource and Enterprise Versions
         // for Cloud (Horizontal) version, redirect to the signin page
-        const expressApp = getRunningExpressApp()
-        const platform = expressApp.identityManager.getPlatformType()
-        if (platform === Platform.CLOUD) {
-            return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
-        }
-        const orgService = new OrganizationService()
-        const queryRunner = expressApp.AppDataSource.createQueryRunner()
-        await queryRunner.connect()
-        const registeredOrganizationCount = await orgService.countOrganizations(queryRunner)
-        await queryRunner.release()
-        if (registeredOrganizationCount === 0) {
+        try {
+            const expressApp = getRunningExpressApp()
+            const platform = expressApp.identityManager?.getPlatformType() || Platform.OPEN_SOURCE
+            if (platform === Platform.CLOUD) {
+                return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
+            }
+            if (!expressApp.AppDataSource || !expressApp.AppDataSource.isInitialized) {
+                return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/chatflows' })
+            }
+            let registeredOrganizationCount = 0
+            let queryRunner: any
+            try {
+                const orgService = new OrganizationService()
+                queryRunner = expressApp.AppDataSource.createQueryRunner()
+                await queryRunner.connect()
+                registeredOrganizationCount = await orgService.countOrganizations(queryRunner)
+            } catch (err) {
+                logger.error('Error counting organizations in auth/resolve:', err)
+            } finally {
+                if (queryRunner) await queryRunner.release()
+            }
+            if (registeredOrganizationCount === 0) {
+                switch (platform) {
+                    case Platform.ENTERPRISE:
+                        if (!identityManager?.isLicenseValid()) {
+                            return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/license-expired' })
+                        }
+                        return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/organization-setup' })
+                    default:
+                        return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/organization-setup' })
+                }
+            }
             switch (platform) {
                 case Platform.ENTERPRISE:
-                    if (!identityManager.isLicenseValid()) {
+                    if (!identityManager?.isLicenseValid()) {
                         return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/license-expired' })
                     }
-                    return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/organization-setup' })
+                    return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
                 default:
-                    return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/organization-setup' })
+                    return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
             }
-        }
-        switch (platform) {
-            case Platform.ENTERPRISE:
-                if (!identityManager.isLicenseValid()) {
-                    return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/license-expired' })
-                }
-                return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
-            default:
-                return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
+        } catch (err) {
+            logger.error('Error handling auth/resolve:', err)
+            return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/chatflows' })
         }
     })
 

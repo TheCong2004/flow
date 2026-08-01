@@ -124,7 +124,7 @@ export function getDataSource(): DataSource {
 }
 
 export const getDatabaseSSLFromEnv = () => {
-    if (process.env.DATABASE_SSL === 'false') {
+    if (process.env.DATABASE_SSL === 'false' || process.env.DATABASE_SSL === '0') {
         return false
     }
     let host = process.env.DATABASE_HOST ? process.env.DATABASE_HOST.trim().split(':')[0] : undefined
@@ -136,6 +136,12 @@ export const getDatabaseSSLFromEnv = () => {
             // ignore
         }
     }
+    const isExplicitSSL = process.env.DATABASE_SSL === 'true' || process.env.DATABASE_SSL === '1'
+    const isLocalHost = host === 'localhost' || host === '127.0.0.1' || (host && host.endsWith('.local'))
+    if (!isExplicitSSL && (isLocalHost || !host)) {
+        return false
+    }
+
     const isIP = host && /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(host)
     const sslConfig: any = {
         rejectUnauthorized: process.env.DATABASE_REJECT_UNAUTHORIZED === 'true'
@@ -148,5 +154,6 @@ export const getDatabaseSSLFromEnv = () => {
     }
     return sslConfig
 }
+
 
 

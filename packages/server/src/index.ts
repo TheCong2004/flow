@@ -102,18 +102,33 @@ export class App {
             logger.error('❌ [server]: Error initializing auth secrets:', err)
         }
 
-        // Initialize database
         try {
-            await this.AppDataSource.initialize()
-            logger.info('📦 [server]: Data Source initialized successfully')
+            // Initialize database
+            let dbRetries = 5
+            while (dbRetries > 0) {
+                try {
+                    if (!this.AppDataSource.isInitialized) {
+                        await this.AppDataSource.initialize()
+                        logger.info('📦 [server]: Data Source initialized successfully')
+                    }
+                    // Run Migrations Scripts
+                    await this.AppDataSource.runMigrations({ transaction: 'each' })
+                    logger.info('🔄 [server]: Database migrations completed successfully')
 
-            // Run Migrations Scripts
-            await this.AppDataSource.runMigrations({ transaction: 'each' })
-            logger.info('🔄 [server]: Database migrations completed successfully')
-
-            // Initialize Identity Manager
-            this.identityManager = await IdentityManager.getInstance()
-            logger.info('🔐 [server]: Identity Manager initialized successfully')
+                    // Initialize Identity Manager
+                    this.identityManager = await IdentityManager.getInstance()
+                    logger.info('🔐 [server]: Identity Manager initialized successfully')
+                    break
+                } catch (err: any) {
+                    dbRetries--
+                    logger.error(`❌ [server]: Error during Data Source initialization (${dbRetries} retries left):`, err?.stack || err)
+                    if (dbRetries === 0) {
+                        logger.error('❌ [server]: Database initialization failed completely after 5 retries.')
+                    } else {
+                        await new Promise((resolve) => setTimeout(resolve, 3000))
+                    }
+                }
+            }
 
             // Initialize nodes pool
             this.nodesPool = new NodesPool()

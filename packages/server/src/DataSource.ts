@@ -115,11 +115,12 @@ export const getDatabaseSSLFromEnv = () => {
             ca: Buffer.from(process.env.DATABASE_SSL_KEY_BASE64, 'base64'),
             servername: process.env.DATABASE_HOST
         }
-    } else if (process.env.DATABASE_SSL === 'true') {
-        return {
-            rejectUnauthorized: process.env.DATABASE_REJECT_UNAUTHORIZED === 'true',
-            servername: process.env.DATABASE_HOST
-        }
     }
-    return undefined
+    if (process.env.DATABASE_SSL === 'false') {
+        return false
+    }
+    return {
+        rejectUnauthorized: process.env.DATABASE_REJECT_UNAUTHORIZED === 'true',
+        servername: process.env.DATABASE_HOST
+    }
 }

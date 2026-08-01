@@ -16,12 +16,13 @@ const getUserHome = (): string => {
 
 let appDataSource: DataSource
 
-export const init = async (): Promise<void> => {
+export const init = async (forceNoSSL = false): Promise<void> => {
     let homePath
     let flowisePath = path.join(getUserHome(), '.flowise')
     if (!fs.existsSync(flowisePath)) {
         fs.mkdirSync(flowisePath)
     }
+    logger.info(`📦 [DataSource]: Initializing DB type: ${process.env.DATABASE_TYPE || 'sqlite (default)'}, forceNoSSL: ${forceNoSSL}`)
     switch (process.env.DATABASE_TYPE) {
         case 'sqlite':
             homePath = process.env.DATABASE_PATH ?? flowisePath
@@ -67,7 +68,7 @@ export const init = async (): Promise<void> => {
             })
             break
         case 'postgres': {
-            const sslConfig = getDatabaseSSLFromEnv()
+            const sslConfig = forceNoSSL ? false : getDatabaseSSLFromEnv()
             const postgresOptions: any = {
                 type: 'postgres',
                 ssl: sslConfig,
@@ -77,7 +78,7 @@ export const init = async (): Promise<void> => {
                 migrations: postgresMigrations,
                 extra: {
                     idleTimeoutMillis: 120000,
-                    ...(sslConfig ? { ssl: sslConfig } : {})
+                    ...(sslConfig ? { ssl: sslConfig } : { ssl: false })
                 },
                 logging: ['error', 'warn', 'info', 'log'],
                 logger: 'advanced-console',

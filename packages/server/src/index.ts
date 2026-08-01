@@ -11,7 +11,7 @@ import { DataSource } from 'typeorm'
 import { AbortControllerPool } from './AbortControllerPool'
 import { CachePool } from './CachePool'
 import { ChatFlow } from './database/entities/ChatFlow'
-import { getDataSource } from './DataSource'
+import { getDataSource, init } from './DataSource'
 import { Organization } from './enterprise/database/entities/organization.entity'
 import { Workspace } from './enterprise/database/entities/workspace.entity'
 import { LoggedInUser } from './enterprise/Interface.Enterprise'
@@ -105,8 +105,13 @@ export class App {
         try {
             // Initialize database
             let dbRetries = 5
+            let tryNoSSL = false
             while (dbRetries > 0) {
                 try {
+                    if (!this.AppDataSource || tryNoSSL) {
+                        await init(tryNoSSL)
+                        this.AppDataSource = getDataSource()
+                    }
                     if (!this.AppDataSource.isInitialized) {
                         await this.AppDataSource.initialize()
                         logger.info('📦 [server]: Data Source initialized successfully')
@@ -121,7 +126,14 @@ export class App {
                     break
                 } catch (err: any) {
                     dbRetries--
-                    logger.error(`❌ [server]: Error during Data Source initialization (${dbRetries} retries left):`, err?.stack || err)
+                    const errMsg = err?.message || String(err)
+                    logger.error(`❌ [server]: Error during Data Source initialization (${dbRetries} retries left): ${errMsg}`, err?.stack || '')
+
+                    if (!tryNoSSL && process.env.DATABASE_TYPE === 'postgres') {
+                        logger.warn('⚠️ [server]: Postgres connection failed with SSL, retrying without SSL (plain TCP)...')
+                        tryNoSSL = true
+                    }
+
                     if (dbRetries === 0) {
                         logger.error('❌ [server]: Database initialization failed completely after 5 retries.')
                     } else {

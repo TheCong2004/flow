@@ -20,7 +20,10 @@ const getSettings = async () => {
                 return { PLATFORM_TYPE: Platform.CLOUD }
             }
             default: {
-                return { PLATFORM_TYPE: Platform.OPEN_SOURCE }
+                return {
+                    PLATFORM_TYPE: Platform.OPEN_SOURCE,
+                    isUserMode: !!(process.env.FLOWISE_USERNAME && process.env.FLOWISE_PASSWORD)
+                }
             }
         }
     } catch (error) {

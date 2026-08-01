@@ -42,8 +42,11 @@ export const RequireAuth = ({ permission, display, children }) => {
     }
 
     // Step 1: Deployment Type Specific Logic
-    // Open Source: Only show features without display property
+    // Open Source: Check if user mode (password auth) is enabled
     if (isOpenSource) {
+        if (config?.isUserMode && !currentUser) {
+            return <Navigate to='/login' replace state={{ path: location.pathname }} />
+        }
         return !display ? children : <Navigate to='/unauthorized' replace />
     }
 

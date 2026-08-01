@@ -3,12 +3,14 @@ import { StatusCodes } from 'http-status-codes'
 import { Platform } from '../../../Interface'
 import { getRunningExpressApp } from '../../../utils/getRunningExpressApp'
 import { LoggedInUser } from '../../Interface.Enterprise'
+import { Permissions } from '../../rbac/Permissions'
 
 const getAllPermissions = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const appServer = getRunningExpressApp()
         const type = req.params.type as string
-        const allPermissions = appServer.identityManager.getPermissions().toJSON()
+        const permissionsObj = appServer.identityManager?.getPermissions() || new Permissions()
+        const allPermissions = permissionsObj && typeof permissionsObj.toJSON === 'function' ? permissionsObj.toJSON() : {}
         const user = req.user as LoggedInUser
 
         let permissions: { [key: string]: { key: string; value: string }[] } = allPermissions

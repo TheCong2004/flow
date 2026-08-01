@@ -431,9 +431,24 @@ const _generateJwtToken = (user: Partial<LoggedInUser>, expiryInMinutes: number,
 }
 
 export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
+    const identityManager = getRunningExpressApp().identityManager
+    const isOpenSource = !identityManager || identityManager?.isOpenSource() || identityManager?.getPlatformType() === Platform.OPEN_SOURCE
+    const isAuthDisabled = isOpenSource && !process.env.FLOWISE_USERNAME && !process.env.FLOWISE_PASSWORD
+
     passport.authenticate('jwt', { session: true }, (err: any, user: LoggedInUser, info: object) => {
         if (err) {
             return next(err)
+        }
+
+        if (!user && isAuthDisabled) {
+            req.user = {
+                id: 'default',
+                activeWorkspaceId: 'default',
+                activeOrganizationId: 'default',
+                permissions: [],
+                features: {}
+            } as any
+            return next()
         }
 
         // @ts-ignore
@@ -448,8 +463,7 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
             return res.status(401).json({ message: ErrorMessage.INVALID_MISSING_TOKEN })
         }
 
-        const identityManager = getRunningExpressApp().identityManager
-        if (identityManager.isEnterprise() && !identityManager.isLicenseValid()) {
+        if (identityManager?.isEnterprise() && !identityManager?.isLicenseValid()) {
             return res.status(401).json({ redirectUrl: '/license-expired' })
         }
 

@@ -83,6 +83,7 @@ export class App {
     sessionStore: any
     constructor() {
         this.app = express()
+        this.identityManager = new IdentityManager()
         this.nodesPool = new NodesPool()
         this.abortControllerPool = new AbortControllerPool()
         this.cachePool = new CachePool()
@@ -270,7 +271,11 @@ export class App {
         const URL_CASE_INSENSITIVE_REGEX: RegExp = /\/api\/v1\//i
         const URL_CASE_SENSITIVE_REGEX: RegExp = /\/api\/v1\//
 
-        await initializeJwtCookieMiddleware(this.app, this.identityManager)
+        try {
+            await initializeJwtCookieMiddleware(this.app, this.identityManager)
+        } catch (err) {
+            logger.error('❌ [server]: Error initializing JWT cookie middleware:', err)
+        }
 
         this.app.use(async (req, res, next) => {
             if (URL_CASE_INSENSITIVE_REGEX.test(req.path)) {
@@ -286,8 +291,8 @@ export class App {
                             return res.status(401).json({ error: 'Unauthorized Access' })
                         }
 
-                        if (this.identityManager.getPlatformType() !== Platform.OPEN_SOURCE) {
-                            if (!this.identityManager.isLicenseValid()) {
+                        if (this.identityManager?.getPlatformType() !== Platform.OPEN_SOURCE) {
+                            if (!this.identityManager?.isLicenseValid()) {
                                 return res.status(401).json({ error: 'Unauthorized Access' })
                             }
                         }
@@ -313,8 +318,8 @@ export class App {
                         }
                         const subscriptionId = org.subscriptionId as string
                         const customerId = org.customerId as string
-                        const features = await this.identityManager.getFeaturesByPlan(subscriptionId)
-                        const productId = await this.identityManager.getProductIdFromSubscription(subscriptionId)
+                        const features = await this.identityManager?.getFeaturesByPlan(subscriptionId)
+                        const productId = await this.identityManager?.getProductIdFromSubscription(subscriptionId)
                         // @ts-ignore
                         req.user = {
                             permissions: apiKey.permissions,
@@ -337,7 +342,11 @@ export class App {
             }
         })
 
-        await this.identityManager.initializeSSO(this.app)
+        try {
+            await this.identityManager?.initializeSSO(this.app)
+        } catch (err) {
+            logger.error('❌ [server]: Error initializing SSO:', err)
+        }
 
         if (process.env.ENABLE_METRICS === 'true') {
             switch (process.env.METRICS_PROVIDER) {

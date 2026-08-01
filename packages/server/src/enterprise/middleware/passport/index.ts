@@ -198,15 +198,27 @@ export const initializeJwtCookieMiddleware = async (app: express.Application, id
         )
     )
 
+
     app.post('/api/v1/auth/resolve', async (req, res) => {
         // check for the organization, if empty redirect to the organization setup page for OpenSource and Enterprise Versions
         // for Cloud (Horizontal) version, redirect to the signin page
         try {
             const expressApp = getRunningExpressApp()
             const platform = expressApp.identityManager?.getPlatformType() || Platform.OPEN_SOURCE
+
+            // For Cloud, always redirect to signin
             if (platform === Platform.CLOUD) {
                 return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
             }
+
+            // For Open Source, skip enterprise DB queries entirely - just check env vars
+            if (platform === Platform.OPEN_SOURCE) {
+                if (process.env.FLOWISE_USERNAME && process.env.FLOWISE_PASSWORD) {
+                    return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
+                }
+                return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/chatflows' })
+            }
+
             if (!expressApp.AppDataSource || !expressApp.AppDataSource.isInitialized) {
                 return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/chatflows' })
             }
@@ -229,11 +241,6 @@ export const initializeJwtCookieMiddleware = async (app: express.Application, id
                             return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/license-expired' })
                         }
                         return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/organization-setup' })
-                    case Platform.OPEN_SOURCE:
-                        if (process.env.FLOWISE_USERNAME && process.env.FLOWISE_PASSWORD) {
-                            return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
-                        }
-                        return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/chatflows' })
                     default:
                         return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/chatflows' })
                 }
@@ -245,9 +252,6 @@ export const initializeJwtCookieMiddleware = async (app: express.Application, id
                     }
                     return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
                 default:
-                    if (process.env.FLOWISE_USERNAME && process.env.FLOWISE_PASSWORD) {
-                        return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
-                    }
                     return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/chatflows' })
             }
         } catch (err) {
@@ -255,6 +259,7 @@ export const initializeJwtCookieMiddleware = async (app: express.Application, id
             return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/chatflows' })
         }
     })
+
 
     app.post('/api/v1/auth/refreshToken', async (req, res) => {
         const refreshToken = req.cookies.refreshToken

@@ -66,7 +66,8 @@ export const init = async (): Promise<void> => {
                 ssl: getDatabaseSSLFromEnv()
             })
             break
-        case 'postgres':
+        case 'postgres': {
+            const sslConfig = getDatabaseSSLFromEnv()
             appDataSource = new DataSource({
                 type: 'postgres',
                 host: process.env.DATABASE_HOST,
@@ -74,13 +75,14 @@ export const init = async (): Promise<void> => {
                 username: process.env.DATABASE_USER,
                 password: process.env.DATABASE_PASSWORD,
                 database: process.env.DATABASE_NAME,
-                ssl: getDatabaseSSLFromEnv(),
+                ssl: sslConfig,
                 synchronize: false,
                 migrationsRun: false,
                 entities: entitiesList,
                 migrations: postgresMigrations,
                 extra: {
-                    idleTimeoutMillis: 120000
+                    idleTimeoutMillis: 120000,
+                    ...(sslConfig ? { ssl: sslConfig } : {})
                 },
                 logging: ['error', 'warn', 'info', 'log'],
                 logger: 'advanced-console',
@@ -91,6 +93,7 @@ export const init = async (): Promise<void> => {
                 applicationName: 'Flowise'
             })
             break
+        }
         default:
             homePath = process.env.DATABASE_PATH ?? flowisePath
             appDataSource = new DataSource({
@@ -113,18 +116,19 @@ export function getDataSource(): DataSource {
 }
 
 export const getDatabaseSSLFromEnv = () => {
-    if (process.env.DATABASE_SSL_KEY_BASE64) {
-        return {
-            rejectUnauthorized: process.env.DATABASE_REJECT_UNAUTHORIZED === 'true',
-            ca: Buffer.from(process.env.DATABASE_SSL_KEY_BASE64, 'base64'),
-            servername: process.env.DATABASE_HOST
-        }
-    }
     if (process.env.DATABASE_SSL === 'false') {
         return false
     }
-    return {
-        rejectUnauthorized: process.env.DATABASE_REJECT_UNAUTHORIZED === 'true',
-        servername: process.env.DATABASE_HOST
+    const host = process.env.DATABASE_HOST ? process.env.DATABASE_HOST.split(':')[0] : undefined
+    const sslConfig: any = {
+        rejectUnauthorized: process.env.DATABASE_REJECT_UNAUTHORIZED === 'true'
     }
+    if (host) {
+        sslConfig.servername = host
+    }
+    if (process.env.DATABASE_SSL_KEY_BASE64) {
+        sslConfig.ca = Buffer.from(process.env.DATABASE_SSL_KEY_BASE64, 'base64')
+    }
+    return sslConfig
 }
+

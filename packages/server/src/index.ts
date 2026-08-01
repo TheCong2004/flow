@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { ExpressAdapter } from '@bull-board/express'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'

@@ -229,8 +229,13 @@ export const initializeJwtCookieMiddleware = async (app: express.Application, id
                             return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/license-expired' })
                         }
                         return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/organization-setup' })
+                    case Platform.OPEN_SOURCE:
+                        if (process.env.FLOWISE_USERNAME && process.env.FLOWISE_PASSWORD) {
+                            return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
+                        }
+                        return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/chatflows' })
                     default:
-                        return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/organization-setup' })
+                        return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/chatflows' })
                 }
             }
             switch (platform) {
@@ -240,7 +245,10 @@ export const initializeJwtCookieMiddleware = async (app: express.Application, id
                     }
                     return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
                 default:
-                    return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
+                    if (process.env.FLOWISE_USERNAME && process.env.FLOWISE_PASSWORD) {
+                        return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/signin' })
+                    }
+                    return res.status(HttpStatusCode.Ok).json({ redirectUrl: '/chatflows' })
             }
         } catch (err) {
             logger.error('Error handling auth/resolve:', err)

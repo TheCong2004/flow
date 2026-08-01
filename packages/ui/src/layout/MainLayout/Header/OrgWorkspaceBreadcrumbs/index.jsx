@@ -28,6 +28,7 @@ import workspaceApi from '@/api/workspace'
 
 // hooks
 import useApi from '@/hooks/useApi'
+import { useConfig } from '@/store/context/ConfigContext'
 
 // store
 import { store } from '@/store'
@@ -93,6 +94,7 @@ const OrgWorkspaceBreadcrumbs = () => {
 
     const user = useSelector((state) => state.auth.user)
     const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
+    const { isOpenSource } = useConfig()
     const customization = useSelector((state) => state.customization)
 
     const [orgAnchorEl, setOrgAnchorEl] = useState(null)
@@ -171,13 +173,13 @@ const OrgWorkspaceBreadcrumbs = () => {
     }
 
     useEffect(() => {
-        // Fetch workspaces when component mounts
-        if (isAuthenticated && user) {
+        // Fetch workspaces when component mounts - skip for Open Source (no enterprise orgs)
+        if (isAuthenticated && user && !isOpenSource) {
             getOrganizationsByUserIdApi.request(user.id)
         }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated, user])
+    }, [isAuthenticated, user, isOpenSource])
 
     useEffect(() => {
         if (getWorkspacesByUserIdApi.data) {

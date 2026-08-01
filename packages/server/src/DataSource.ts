@@ -98,6 +98,12 @@ export const init = async (forceNoSSL = false): Promise<void> => {
                 postgresOptions.username = process.env.DATABASE_USER
                 postgresOptions.password = process.env.DATABASE_PASSWORD
                 postgresOptions.database = process.env.DATABASE_NAME
+
+                if (rawHost.includes('neon.tech') || rawHost.startsWith('ep-')) {
+                    const endpointId = rawHost.split('.')[0]
+                    postgresOptions.extra.options = `-c endpoint=${endpointId}`
+                    logger.info(`🐘 [DataSource]: Detected Neon database host. Appended option: -c endpoint=${endpointId}`)
+                }
             }
 
             appDataSource = new DataSource(postgresOptions)

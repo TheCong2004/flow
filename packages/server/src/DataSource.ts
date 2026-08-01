@@ -68,13 +68,8 @@ export const init = async (): Promise<void> => {
             break
         case 'postgres': {
             const sslConfig = getDatabaseSSLFromEnv()
-            appDataSource = new DataSource({
+            const postgresOptions: any = {
                 type: 'postgres',
-                host: process.env.DATABASE_HOST,
-                port: parseInt(process.env.DATABASE_PORT || '5432'),
-                username: process.env.DATABASE_USER,
-                password: process.env.DATABASE_PASSWORD,
-                database: process.env.DATABASE_NAME,
                 ssl: sslConfig,
                 synchronize: false,
                 migrationsRun: false,
@@ -87,11 +82,24 @@ export const init = async (): Promise<void> => {
                 logging: ['error', 'warn', 'info', 'log'],
                 logger: 'advanced-console',
                 logNotifications: true,
-                poolErrorHandler: (err) => {
+                poolErrorHandler: (err: any) => {
                     logger.error(`Database pool error: ${JSON.stringify(err)}`)
                 },
                 applicationName: 'Flowise'
-            })
+            }
+
+            if (process.env.DATABASE_URL) {
+                postgresOptions.url = process.env.DATABASE_URL
+            } else {
+                const rawHost = process.env.DATABASE_HOST ? process.env.DATABASE_HOST.trim().split(':')[0] : 'localhost'
+                postgresOptions.host = rawHost
+                postgresOptions.port = parseInt(process.env.DATABASE_PORT || '5432')
+                postgresOptions.username = process.env.DATABASE_USER
+                postgresOptions.password = process.env.DATABASE_PASSWORD
+                postgresOptions.database = process.env.DATABASE_NAME
+            }
+
+            appDataSource = new DataSource(postgresOptions)
             break
         }
         default:
@@ -119,11 +127,20 @@ export const getDatabaseSSLFromEnv = () => {
     if (process.env.DATABASE_SSL === 'false') {
         return false
     }
-    const host = process.env.DATABASE_HOST ? process.env.DATABASE_HOST.split(':')[0] : undefined
+    let host = process.env.DATABASE_HOST ? process.env.DATABASE_HOST.trim().split(':')[0] : undefined
+    if (!host && process.env.DATABASE_URL) {
+        try {
+            const parsedUrl = new URL(process.env.DATABASE_URL)
+            host = parsedUrl.hostname
+        } catch (e) {
+            // ignore
+        }
+    }
+    const isIP = host && /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(host)
     const sslConfig: any = {
         rejectUnauthorized: process.env.DATABASE_REJECT_UNAUTHORIZED === 'true'
     }
-    if (host) {
+    if (host && !isIP) {
         sslConfig.servername = host
     }
     if (process.env.DATABASE_SSL_KEY_BASE64) {
@@ -131,4 +148,5 @@ export const getDatabaseSSLFromEnv = () => {
     }
     return sslConfig
 }
+
 

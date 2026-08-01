@@ -2,13 +2,17 @@ import 'reflect-metadata'
 import path from 'path'
 import * as fs from 'fs'
 import { DataSource } from 'typeorm'
-import { getUserHome } from './utils'
 import { entities } from './database/entities'
 import { sqliteMigrations } from './database/migrations/sqlite'
 import { mysqlMigrations } from './database/migrations/mysql'
 import { mariadbMigrations } from './database/migrations/mariadb'
 import { postgresMigrations } from './database/migrations/postgres'
 import logger from './utils/logger'
+
+const getUserHome = (): string => {
+    const variableName = process.platform === 'win32' ? 'USERPROFILE' : 'HOME'
+    return process.env[variableName] || process.cwd()
+}
 
 let appDataSource: DataSource
 

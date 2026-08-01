@@ -299,6 +299,38 @@ export const initializeJwtCookieMiddleware = async (app: express.Application, id
     })
 
     app.post('/api/v1/auth/login', (req, res, next?) => {
+        // For Open Source with username/password mode, authenticate directly against env vars
+        const platform = getRunningExpressApp().identityManager?.getPlatformType() || Platform.OPEN_SOURCE
+        if (platform === Platform.OPEN_SOURCE && process.env.FLOWISE_USERNAME && process.env.FLOWISE_PASSWORD) {
+            const { email, password } = req.body
+            if (!email || !password) {
+                return res.status(401).json({ message: 'Missing credentials' })
+            }
+            if (email !== process.env.FLOWISE_USERNAME || password !== process.env.FLOWISE_PASSWORD) {
+                return res.status(401).json({ message: 'Invalid credentials' })
+            }
+            // Build a minimal logged-in user for Open Source mode
+            const loggedInUser: any = {
+                id: 'default',
+                email: email,
+                name: email,
+                activeWorkspaceId: 'default',
+                activeOrganizationId: 'default',
+                isOrganizationAdmin: true,
+                isGlobal: true,
+                permissions: [],
+                features: {}
+            }
+            const token = generateJwtAuthToken(loggedInUser)
+            const refreshToken = generateJwtRefreshToken(loggedInUser)
+            return res
+                .cookie('token', token, { httpOnly: true, secure: secureCookie, sameSite: 'lax' })
+                .cookie('refreshToken', refreshToken, { httpOnly: true, secure: secureCookie, sameSite: 'lax' })
+                .type('json')
+                .send({ ...loggedInUser })
+        }
+
+        // Enterprise login via passport
         passport.authenticate('login', async (err: any, user: LoggedInUser) => {
             try {
                 if (err || !user) {
@@ -326,6 +358,7 @@ export const initializeJwtCookieMiddleware = async (app: express.Application, id
         })(req, res, next)
     })
 }
+
 
 export const setTokenOrCookies = (
     res: Response,

@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import path from 'path'
 import * as fs from 'fs'
 import { DataSource } from 'typeorm'
-import { entities } from './database/entities'
+import { entitiesList } from './database/entities'
 import { sqliteMigrations } from './database/migrations/sqlite'
 import { mysqlMigrations } from './database/migrations/mysql'
 import { mariadbMigrations } from './database/migrations/mariadb'
@@ -30,7 +30,7 @@ export const init = async (): Promise<void> => {
                 database: path.resolve(homePath, 'database.sqlite'),
                 synchronize: false,
                 migrationsRun: false,
-                entities: Object.values(entities),
+                entities: entitiesList,
                 migrations: sqliteMigrations
             })
             break
@@ -45,7 +45,7 @@ export const init = async (): Promise<void> => {
                 charset: 'utf8mb4',
                 synchronize: false,
                 migrationsRun: false,
-                entities: Object.values(entities),
+                entities: entitiesList,
                 migrations: mysqlMigrations,
                 ssl: getDatabaseSSLFromEnv()
             })
@@ -61,7 +61,7 @@ export const init = async (): Promise<void> => {
                 charset: 'utf8mb4',
                 synchronize: false,
                 migrationsRun: false,
-                entities: Object.values(entities),
+                entities: entitiesList,
                 migrations: mariadbMigrations,
                 ssl: getDatabaseSSLFromEnv()
             })
@@ -77,7 +77,7 @@ export const init = async (): Promise<void> => {
                 ssl: getDatabaseSSLFromEnv(),
                 synchronize: false,
                 migrationsRun: false,
-                entities: Object.values(entities),
+                entities: entitiesList,
                 migrations: postgresMigrations,
                 extra: {
                     idleTimeoutMillis: 120000
@@ -98,7 +98,7 @@ export const init = async (): Promise<void> => {
                 database: path.resolve(homePath, 'database.sqlite'),
                 synchronize: false,
                 migrationsRun: false,
-                entities: Object.values(entities),
+                entities: entitiesList,
                 migrations: sqliteMigrations
             })
             break

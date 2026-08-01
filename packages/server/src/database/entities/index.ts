@@ -31,6 +31,43 @@ import { ScheduleRecord } from './ScheduleRecord'
 import { ScheduleTriggerLog } from './ScheduleTriggerLog'
 import { ExternalIdentity } from './ExternalIdentity'
 
+export const entitiesList = [
+    ChatFlow,
+    ChatMessage,
+    ChatMessageFeedback,
+    Credential,
+    Tool,
+    Assistant,
+    Variable,
+    UpsertHistory,
+    DocumentStore,
+    DocumentStoreFileChunk,
+    Lead,
+    Dataset,
+    DatasetRow,
+    Evaluation,
+    EvaluationRun,
+    Evaluator,
+    ApiKey,
+    User,
+    WorkspaceUsers,
+    LoginActivity,
+    WorkspaceShared,
+    CustomTemplate,
+    Execution,
+    CustomMcpServer,
+    Organization,
+    Role,
+    OrganizationUser,
+    Workspace,
+    WorkspaceUser,
+    LoginMethod,
+    LoginSession,
+    ScheduleRecord,
+    ScheduleTriggerLog,
+    ExternalIdentity
+]
+
 export const entities = {
     ChatFlow,
     ChatMessage,
@@ -67,3 +104,4 @@ export const entities = {
     ScheduleTriggerLog,
     ExternalIdentity
 }
+

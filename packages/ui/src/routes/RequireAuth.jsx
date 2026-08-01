@@ -29,7 +29,7 @@ const checkFeatureFlag = (features, display, children) => {
 
 export const RequireAuth = ({ permission, display, children }) => {
     const location = useLocation()
-    const { isCloud, isOpenSource, isEnterpriseLicensed, loading } = useConfig()
+    const { config, isCloud, isOpenSource, isEnterpriseLicensed, loading } = useConfig()
     const { hasPermission } = useAuth()
     const isGlobal = useSelector((state) => state.auth.isGlobal)
     const currentUser = useSelector((state) => state.auth.user)

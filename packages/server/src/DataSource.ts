@@ -89,21 +89,46 @@ export const init = async (forceNoSSL = false): Promise<void> => {
                 applicationName: 'Flowise'
             }
 
+            let dbHost = (process.env.DATABASE_HOST || process.env.PGHOST || '').trim()
+            if (dbHost.includes(':')) dbHost = dbHost.split(':')[0]
+
             if (process.env.DATABASE_URL) {
-                postgresOptions.url = process.env.DATABASE_URL
+                let dbUrl = process.env.DATABASE_URL.trim()
+                try {
+                    const parsedUrl = new URL(dbUrl)
+                    dbHost = parsedUrl.hostname
+                    if (dbHost.includes('neon.tech') || dbHost.startsWith('ep-')) {
+                        const endpointId = dbHost.split('.')[0]
+                        postgresOptions.extra.options = `-c endpoint=${endpointId}`
+                        if (!dbUrl.includes('options=')) {
+                            const sep = dbUrl.includes('?') ? '&' : '?'
+                            dbUrl = `${dbUrl}${sep}options=endpoint%3D${endpointId}`
+                        }
+                    }
+                } catch (e) {
+                    // ignore
+                }
+                postgresOptions.url = dbUrl
+                logger.info(`🐘 [DataSource]: Using DATABASE_URL connection string (host: ${dbHost})`)
             } else {
-                const rawHost = process.env.DATABASE_HOST ? process.env.DATABASE_HOST.trim().split(':')[0] : 'localhost'
+                const rawHost = dbHost || 'localhost'
                 postgresOptions.host = rawHost
-                postgresOptions.port = parseInt(process.env.DATABASE_PORT || '5432')
-                postgresOptions.username = process.env.DATABASE_USER
-                postgresOptions.password = process.env.DATABASE_PASSWORD
-                postgresOptions.database = process.env.DATABASE_NAME
+                postgresOptions.port = parseInt(process.env.DATABASE_PORT || process.env.PGPORT || '5432')
+                postgresOptions.username = process.env.DATABASE_USER || process.env.PGUSER
+                postgresOptions.password = process.env.DATABASE_PASSWORD || process.env.PGPASSWORD
+                postgresOptions.database = process.env.DATABASE_NAME || process.env.PGDATABASE
 
                 if (rawHost.includes('neon.tech') || rawHost.startsWith('ep-')) {
                     const endpointId = rawHost.split('.')[0]
                     postgresOptions.extra.options = `-c endpoint=${endpointId}`
-                    logger.info(`🐘 [DataSource]: Detected Neon database host. Appended option: -c endpoint=${endpointId}`)
+                    logger.info(`🐘 [DataSource]: Detected Neon database host (${rawHost}). Appended option: -c endpoint=${endpointId}`)
                 }
+            }
+
+            if (sslConfig && typeof sslConfig === 'object' && dbHost && !/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(dbHost)) {
+                sslConfig.servername = dbHost
+                postgresOptions.ssl = sslConfig
+                postgresOptions.extra.ssl = sslConfig
             }
 
             appDataSource = new DataSource(postgresOptions)
@@ -127,6 +152,24 @@ export function getDataSource(): DataSource {
     if (appDataSource === undefined) {
         init()
     }
+    return appDataSource
+}
+
+export const initSQLiteFallback = (): DataSource => {
+    let flowisePath = path.join(getUserHome(), '.flowise')
+    if (!fs.existsSync(flowisePath)) {
+        fs.mkdirSync(flowisePath)
+    }
+    const homePath = process.env.DATABASE_PATH ?? flowisePath
+    logger.warn('⚠️ [DataSource]: Falling back to local SQLite database.')
+    appDataSource = new DataSource({
+        type: 'sqlite',
+        database: path.resolve(homePath, 'database.sqlite'),
+        synchronize: false,
+        migrationsRun: false,
+        entities: entitiesList,
+        migrations: sqliteMigrations
+    })
     return appDataSource
 }
 

@@ -11,7 +11,7 @@ import { DataSource } from 'typeorm'
 import { AbortControllerPool } from './AbortControllerPool'
 import { CachePool } from './CachePool'
 import { ChatFlow } from './database/entities/ChatFlow'
-import { getDataSource, init } from './DataSource'
+import { getDataSource, init, initSQLiteFallback } from './DataSource'
 import { Organization } from './enterprise/database/entities/organization.entity'
 import { Workspace } from './enterprise/database/entities/workspace.entity'
 import { LoggedInUser } from './enterprise/Interface.Enterprise'
@@ -135,7 +135,12 @@ export class App {
                     }
 
                     if (dbRetries === 0) {
-                        logger.error('❌ [server]: Database initialization failed completely after 5 retries.')
+                        logger.error('❌ [server]: PostgreSQL connection failed completely. Falling back to local SQLite database...')
+                        this.AppDataSource = initSQLiteFallback()
+                        await this.AppDataSource.initialize()
+                        await this.AppDataSource.runMigrations({ transaction: 'each' })
+                        this.identityManager = await IdentityManager.getInstance()
+                        logger.info('📦 [server]: Fallback SQLite Data Source initialized successfully!')
                     } else {
                         await new Promise((resolve) => setTimeout(resolve, 3000))
                     }

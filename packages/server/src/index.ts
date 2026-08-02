@@ -104,7 +104,7 @@ export class App {
 
         try {
             // Initialize database
-            let dbRetries = 5
+            let dbRetries = 2
             let tryNoSSL = false
             while (dbRetries > 0) {
                 try {
@@ -565,16 +565,16 @@ export async function start(): Promise<void> {
         }
     })
 
-    try {
-        await serverApp.initDatabase()
-        await serverApp.config()
-    } catch (err) {
-        logger.error('❌ [server]: Error during server initialization:', err)
-    }
-
     server.listen(port, host, () => {
         logger.info(`⚡️ [server]: Flowise Server is listening at http://${host}:${port}`)
     })
+
+    try {
+        await serverApp.config()
+        await serverApp.initDatabase()
+    } catch (err) {
+        logger.error('❌ [server]: Error during server initialization:', err)
+    }
 }
 
 export function getInstance(): App | undefined {

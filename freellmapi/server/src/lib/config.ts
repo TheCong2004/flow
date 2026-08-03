@@ -20,8 +20,10 @@ export interface Config {
 }
 
 export function loadConfig(): Config {
-  return {
-    port: process.env.PORT ?? 3001,
+  let port: number | string = process.env.FREELLM_PORT ?? 3001;
+  if (process.env.PORT && process.env.PORT !== '3000') {
+    port = process.env.PORT;
+  }
     // Dual-stack ('::') by default so the dashboard is reachable over both IPv4
     // and IPv6 (e.g. IPv6-enabled Docker networks — #180). Hosts with IPv6
     // disabled fall back to IPv4-only below; HOST overrides the default outright.

@@ -504,6 +504,7 @@ export class App {
             const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
             const child = spawn(npmCmd, ['run', 'dev', '-w', 'server'], {
                 cwd: freellmDir,
+                env: { ...process.env, PORT: '3001', FREELLM_PORT: '3001' },
                 stdio: 'ignore',
                 shell: true,
                 detached: true

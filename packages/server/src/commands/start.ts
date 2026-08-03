@@ -12,10 +12,7 @@ export default class Start extends BaseCommand {
 
     async catch(error: Error) {
         if (error.stack) logger.error(error.stack)
-        await new Promise((resolve) => {
-            setTimeout(resolve, 1000)
-        })
-        await this.failExit()
+        logger.error('❌ [server]: Error during start command:', error.message)
     }
 
     async stopProcess() {

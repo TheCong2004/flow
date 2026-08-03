@@ -99,6 +99,7 @@ export const init = async (forceNoSSL = false): Promise<void> => {
                     dbHost = parsedUrl.hostname
                     if (dbHost.includes('neon.tech') || dbHost.startsWith('ep-')) {
                         const endpointId = dbHost.split('.')[0]
+                        postgresOptions.options = `-c endpoint=${endpointId}`
                         postgresOptions.extra.options = `-c endpoint=${endpointId}`
                         if (!dbUrl.includes('options=')) {
                             const sep = dbUrl.includes('?') ? '&' : '?'
@@ -120,7 +121,11 @@ export const init = async (forceNoSSL = false): Promise<void> => {
 
                 if (rawHost.includes('neon.tech') || rawHost.startsWith('ep-')) {
                     const endpointId = rawHost.split('.')[0]
+                    postgresOptions.options = `-c endpoint=${endpointId}`
                     postgresOptions.extra.options = `-c endpoint=${endpointId}`
+                    if (postgresOptions.username && typeof postgresOptions.username === 'string' && !postgresOptions.username.includes('$')) {
+                        postgresOptions.username = `${postgresOptions.username}$${endpointId}`
+                    }
                     logger.info(`🐘 [DataSource]: Detected Neon database host (${rawHost}). Appended option: -c endpoint=${endpointId}`)
                 }
             }

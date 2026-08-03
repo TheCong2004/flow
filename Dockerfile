@@ -36,7 +36,7 @@ RUN pnpm install && \
     pnpm build:docker
 
 # Runtime memory limit and networking for Node V8 heap
-ENV NODE_OPTIONS=--max-old-space-size=2048
+ENV NODE_OPTIONS="--max-old-space-size=360 --optimize-for-size"
 ENV PORT=3000
 ENV HOST=0.0.0.0
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0

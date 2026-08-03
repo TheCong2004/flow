@@ -553,13 +553,20 @@ export async function start(): Promise<void> {
     const port = 3000
     const server = http.createServer(serverApp.app)
 
+    let listenRetries = 0
     server.on('error', (err: any) => {
         if (err.code === 'EADDRINUSE') {
-            logger.warn(`⚠️ [server]: Port ${port} is currently busy, retrying listen in 1.5s...`)
-            setTimeout(() => {
-                server.close()
-                server.listen(port, host)
-            }, 1500)
+            listenRetries++
+            if (listenRetries <= 3) {
+                logger.warn(`⚠️ [server]: Port ${port} is currently busy, retrying listen (${listenRetries}/3) in 1.5s...`)
+                setTimeout(() => {
+                    server.close()
+                    server.listen(port, host)
+                }, 1500)
+            } else {
+                logger.error(`❌ [server]: Port ${port} is in use by another process. Please stop the process using port ${port}. Exiting...`)
+                process.exit(1)
+            }
         } else {
             logger.error(`❌ [server]: Server error:`, err)
         }

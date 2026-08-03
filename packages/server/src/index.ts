@@ -565,16 +565,19 @@ export async function start(): Promise<void> {
         }
     })
 
+    try {
+        await serverApp.config()
+    } catch (err) {
+        logger.error('❌ [server]: Error configuring server routes:', err)
+    }
+
     server.listen(port, host, () => {
         logger.info(`⚡️ [server]: Flowise Server is listening at http://${host}:${port}`)
     })
 
-    try {
-        await serverApp.config()
-        await serverApp.initDatabase()
-    } catch (err) {
-        logger.error('❌ [server]: Error during server initialization:', err)
-    }
+    serverApp.initDatabase().catch((err) => {
+        logger.error('❌ [server]: Error during database initialization:', err)
+    })
 }
 
 export function getInstance(): App | undefined {
